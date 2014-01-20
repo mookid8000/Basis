@@ -4,31 +4,27 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Basis.MongoDb;
-using MongoDB.Driver;
 using NUnit.Framework;
 
 namespace Basis.Tests
 {
     [TestFixture]
-    public class ItWorks : FixtureBase
+    public class ItWorks : MongoFixture
     {
         EventStream _eventStream;
         EventStore _eventStore;
         InlineStreamHandler _inlineStreamHandler;
-        const string MongoDbConnectionString = "mongodb://localhost/basis_test";
         const string CollectionName = "events";
 
         protected override void DoSetUp()
         {
-            var database = new MongoClient(MongoDbConnectionString)
-                .GetServer()
-                .GetDatabase(new MongoUrl(MongoDbConnectionString).DatabaseName);
+            var database = GetDatabase();
 
             _inlineStreamHandler = new InlineStreamHandler();
             _eventStream = Track(new EventStream(database, CollectionName, _inlineStreamHandler));
             _eventStore = Track(new EventStore(database, CollectionName));
 
-            database.GetCollection(CollectionName).RemoveAll();
+            database.DropCollection(CollectionName);
         }
 
         class InlineStreamHandler : IStreamHandler
@@ -81,6 +77,8 @@ namespace Basis.Tests
 
             _eventStream.Start();
             _eventStore.Start();
+
+            Thread.Sleep(TimeSpan.FromSeconds(1));
 
             _eventStore.Save(new[]
             {

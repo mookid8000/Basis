@@ -52,6 +52,8 @@
   <ItemGroup>
     <Compile Include="ItWorks.cs" />
     <Compile Include="FixtureBase.cs" />
+    <Compile Include="MongoFixture.cs" />
+    <Compile Include="MongoTjek.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

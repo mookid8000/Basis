@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using MongoDB.Driver;
+using MongoDB.Driver.Builders;
 
 namespace Basis.MongoDb
 {
@@ -27,16 +28,33 @@ namespace Basis.MongoDb
                 throw new InvalidOperationException("Cannot save to event store before it has been started!");
             }
 
+            var seqNoForThisEvent = Interlocked.Increment(ref _sequencer);
+
+            Console.Write("Inserting {0}... ", seqNoForThisEvent);
             _database.GetCollection<EventBatch>(_collectionName)
-                .Save(new EventBatch
+                .Insert(new EventBatch
                 {
                     Events = events.ToArray(),
-                    SeqNo = Interlocked.Increment(ref _sequencer)
+                    SeqNo = seqNoForThisEvent
                 });
+            Console.WriteLine("Inserted!");
         }
 
         public void Start()
         {
+            if (!_database.GetCollectionNames().Contains(_collectionName))
+            {
+                var options = new CollectionOptionsBuilder()
+                    .SetCapped(true)
+                    .SetMaxSize(1024 * 1024);
+
+                try
+                {
+                    _database.CreateCollection(_collectionName, options);
+                }
+                catch { }
+            }
+
             _started = true;
         }
 
