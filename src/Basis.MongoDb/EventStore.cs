@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Microsoft.AspNet.SignalR;
+using Microsoft.Owin.Hosting;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
+using Owin;
 
 namespace Basis.MongoDb
 {
@@ -11,6 +14,8 @@ namespace Basis.MongoDb
     {
         readonly MongoDatabase _database;
         readonly string _collectionName;
+        
+        IDisposable _host;
 
         long _sequencer;
         bool _started;
@@ -55,11 +60,35 @@ namespace Basis.MongoDb
                 catch { }
             }
 
+            _host = WebApp.Start<Startup>("http://localhost:3000");
+
             _started = true;
         }
 
         public void Dispose()
         {
+            if (_host != null)
+            {
+                _host.Dispose();
+                _host = null;
+            }
+        }
+    }
+
+    class Startup
+    {
+        public void Configuration(IAppBuilder app)
+        {
+//            app.UseCors(CorsOptions.AllowAll);
+            app.MapSignalR();
+        }
+    }
+
+    public class MyHub : Hub
+    {
+        public void Send(string name, string message)
+        {
+            Clients.All.addMessage(name, message);
         }
     }
 }
