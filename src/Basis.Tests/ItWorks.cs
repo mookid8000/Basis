@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Basis.MongoDb;
 using NUnit.Framework;
 
@@ -11,18 +12,21 @@ namespace Basis.Tests
     [TestFixture]
     public class ItWorks : MongoFixture
     {
-        EventStream _eventStream;
+        EventStreamClient _eventStreamClient;
         EventStore _eventStore;
         InlineStreamHandler _inlineStreamHandler;
+        EventStoreClient _eventStoreClient;
         const string CollectionName = "events";
+        const string EventStoreListenUri = "http://localhost:3000";
 
         protected override void DoSetUp()
         {
             var database = GetDatabase();
 
             _inlineStreamHandler = new InlineStreamHandler();
-            _eventStream = Track(new EventStream(database, CollectionName, _inlineStreamHandler));
-            _eventStore = Track(new EventStore(database, CollectionName));
+            _eventStreamClient = Track(new EventStreamClient(_inlineStreamHandler, EventStoreListenUri));
+            _eventStore = Track(new EventStore(database, CollectionName, EventStoreListenUri));
+            _eventStoreClient = Track(new EventStoreClient(EventStoreListenUri));
 
             database.DropCollection(CollectionName);
         }
@@ -41,7 +45,7 @@ namespace Basis.Tests
                 return _lastSeqNo;
             }
 
-            public void ProcessEvents(IEnumerable<object> events)
+            public async Task ProcessEvents(IEnumerable<object> events)
             {
                 foreach (var handler in _batchHandlers)
                 {
@@ -49,7 +53,7 @@ namespace Basis.Tests
                 }
             }
 
-            public void Commit(long newLastSequenceNumber)
+            public async Task Commit(long newLastSequenceNumber)
             {
                 _lastSeqNo = newLastSequenceNumber;
             }
@@ -75,16 +79,19 @@ namespace Basis.Tests
                 }
             });
 
-            _eventStream.Start();
             _eventStore.Start();
+            
+            _eventStreamClient.Start();
+            _eventStoreClient.Start();
 
             Thread.Sleep(TimeSpan.FromSeconds(1));
 
-            _eventStore.Save(new[]
+            _eventStoreClient.Save(new[]
             {
                 new SomeoneSaid {Value = "hello"},
                 new SomeoneSaid {Value = "world"}
-            });
+            })
+            .Wait();
 
             Thread.Sleep(TimeSpan.FromSeconds(1));
 

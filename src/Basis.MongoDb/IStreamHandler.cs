@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Basis.MongoDb
 {
     public interface IStreamHandler
     {
         long GetLastSequenceNumber();
-        void ProcessEvents(IEnumerable<object> events);
-        void Commit(long newLastSequenceNumber);
+        Task ProcessEvents(IEnumerable<object> events);
+        Task Commit(long newLastSequenceNumber);
     }
 }
