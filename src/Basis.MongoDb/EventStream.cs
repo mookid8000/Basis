@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
 
@@ -16,29 +15,15 @@ namespace Basis.MongoDb
         readonly Thread _backgroundWorker;
 
         volatile bool _keepRunning = true;
-        long _sequencer;
         bool _started;
+
+        long lastSeqNo = -1;
 
         public EventStream(MongoDatabase database, string collectionName)
         {
             _database = database;
             _collectionName = collectionName;
             _backgroundWorker = new Thread(PumpEvents);
-        }
-
-        public void Save(IEnumerable<object> events)
-        {
-            if (!_started)
-            {
-                throw new InvalidOperationException("Cannot save to event stream before it has been started!");
-            }
-
-            _database.GetCollection<EventBatch>(_collectionName)
-                .Save(new EventBatch
-                {
-                    Events = events.ToArray(),
-                    SeqNo = Interlocked.Increment(ref _sequencer)
-                });
         }
 
         public void Handle(Action<IEnumerable<object>> batchHandler)
@@ -64,8 +49,6 @@ namespace Basis.MongoDb
                 PerformEventPumpCycle();
             }
         }
-
-        long lastSeqNo = 0;
         void PerformEventPumpCycle()
         {
             try
@@ -95,13 +78,6 @@ namespace Basis.MongoDb
                     }
                 }
             }
-        }
-
-        class EventBatch
-        {
-            public ObjectId Id { get; set; }
-            public object[] Events { get; set; }
-            public long SeqNo { get; set; }
         }
 
         public void Dispose()

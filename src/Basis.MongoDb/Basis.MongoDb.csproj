@@ -47,6 +47,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EventBatch.cs" />
+    <Compile Include="EventStore.cs" />
     <Compile Include="EventStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

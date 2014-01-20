@@ -12,7 +12,9 @@ namespace Basis.Tests
     public class ItWorks : FixtureBase
     {
         EventStream _eventStream;
+        EventStore _eventStore;
         const string MongoDbConnectionString = "mongodb://localhost/basis_test";
+        const string CollectionName = "events";
 
         protected override void DoSetUp()
         {
@@ -20,7 +22,10 @@ namespace Basis.Tests
                 .GetServer()
                 .GetDatabase(new MongoUrl(MongoDbConnectionString).DatabaseName);
 
-            _eventStream = new EventStream(database, "events");
+            _eventStream = Track(new EventStream(database, CollectionName));
+            _eventStore = Track(new EventStore(database, CollectionName));
+
+            database.GetCollection(CollectionName).RemoveAll();
         }
 
         [Test]
@@ -44,8 +49,9 @@ namespace Basis.Tests
             });
 
             _eventStream.Start();
+            _eventStore.Start();
 
-            _eventStream.Save(new[]
+            _eventStore.Save(new[]
             {
                 new SomeoneSaid {Value = "hello"},
                 new SomeoneSaid {Value = "world"}
