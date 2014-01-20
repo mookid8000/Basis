@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -13,6 +14,7 @@ namespace Basis.Tests
     {
         EventStream _eventStream;
         EventStore _eventStore;
+        InlineStreamHandler _inlineStreamHandler;
         const string MongoDbConnectionString = "mongodb://localhost/basis_test";
         const string CollectionName = "events";
 
@@ -22,10 +24,39 @@ namespace Basis.Tests
                 .GetServer()
                 .GetDatabase(new MongoUrl(MongoDbConnectionString).DatabaseName);
 
-            _eventStream = Track(new EventStream(database, CollectionName));
+            _inlineStreamHandler = new InlineStreamHandler();
+            _eventStream = Track(new EventStream(database, CollectionName, _inlineStreamHandler));
             _eventStore = Track(new EventStore(database, CollectionName));
 
             database.GetCollection(CollectionName).RemoveAll();
+        }
+
+        class InlineStreamHandler : IStreamHandler
+        {
+            readonly List<Action<IEnumerable<object>>> _batchHandlers = new List<Action<IEnumerable<object>>>();
+            long _lastSeqNo = -1;
+
+            public void Handle(Action<IEnumerable<object>> batchHandler)
+            {
+                _batchHandlers.Add(batchHandler);
+            }
+            public long GetLastSequenceNumber()
+            {
+                return _lastSeqNo;
+            }
+
+            public void ProcessEvents(IEnumerable<object> events)
+            {
+                foreach (var handler in _batchHandlers)
+                {
+                    handler(events);
+                }
+            }
+
+            public void Commit(long newLastSequenceNumber)
+            {
+                _lastSeqNo = newLastSequenceNumber;
+            }
         }
 
         [Test]
@@ -33,7 +64,7 @@ namespace Basis.Tests
         {
             var greeting = new StringBuilder();
 
-            _eventStream.Handle(batch =>
+            _inlineStreamHandler.Handle(batch =>
             {
                 foreach (var evt in batch.OfType<SomeoneSaid>())
                 {

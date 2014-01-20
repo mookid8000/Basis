@@ -9,35 +9,27 @@ namespace Basis.MongoDb
 {
     public class EventStream : IDisposable
     {
-        readonly List<Action<IEnumerable<object>>> _batchHandlers = new List<Action<IEnumerable<object>>>();
         readonly MongoDatabase _database;
         readonly string _collectionName;
+        readonly IStreamHandler _streamHandler;
         readonly Thread _backgroundWorker;
 
         volatile bool _keepRunning = true;
         bool _started;
+        long _lastSeqNo = -1;
 
-        long lastSeqNo = -1;
-
-        public EventStream(MongoDatabase database, string collectionName)
+        public EventStream(MongoDatabase database, string collectionName, IStreamHandler streamHandler)
         {
             _database = database;
             _collectionName = collectionName;
+            _streamHandler = streamHandler;
             _backgroundWorker = new Thread(PumpEvents);
-        }
-
-        public void Handle(Action<IEnumerable<object>> batchHandler)
-        {
-            if (_started)
-            {
-                throw new InvalidOperationException("Cannot add handlers to event stream after it has been started!");
-            }
-
-            _batchHandlers.Add(batchHandler);
         }
 
         public void Start()
         {
+            _lastSeqNo = _streamHandler.GetLastSequenceNumber();
+
             _backgroundWorker.Start();
             _started = true;
         }
@@ -54,11 +46,13 @@ namespace Basis.MongoDb
             try
             {
                 var results = _database.GetCollection<EventBatch>(_collectionName)
-                    .Find(Query<EventBatch>.GT(b => b.SeqNo, lastSeqNo));
+                    .Find(Query<EventBatch>.GT(b => b.SeqNo, _lastSeqNo));
 
                 Dispatch(results);
 
-                lastSeqNo = results.Max(r => r.SeqNo);
+                var newLastSeqNo = results.Max(r => r.SeqNo);
+                _streamHandler.Commit(newLastSeqNo);
+                _lastSeqNo = newLastSeqNo;
             }
             catch (Exception exception)
             {
@@ -72,10 +66,7 @@ namespace Basis.MongoDb
             {
                 foreach (var evt in batch.Events)
                 {
-                    foreach (var handler in _batchHandlers)
-                    {
-                        handler(new[] {evt});
-                    }
+                    _streamHandler.ProcessEvents(new[] {evt});
                 }
             }
         }
