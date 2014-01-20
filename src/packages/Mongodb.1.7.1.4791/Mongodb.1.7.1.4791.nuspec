@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>Mongodb</id>
+    <version>1.7.1.4791</version>
+    <title>MongoDB .NET Client Library</title>
+    <authors>Jiangzm</authors>
+    <owners>Jiangzm</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>http://www.mongodb.org/display/DOCS/CSharp+Language+Center</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>MongoDB is a scalable, high-performance, open source NoSQL database.</description>
+    <language>en-US</language>
+    <tags>mongodb mongo nosql c#</tags>
+    <references>
+      <reference file="MongoDB.Bson.dll" />
+      <reference file="MongoDB.Driver.dll" />
+    </references>
+  </metadata>
+</package>
