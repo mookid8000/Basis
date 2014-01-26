@@ -86,6 +86,7 @@
     <Compile Include="EventStore.cs" />
     <Compile Include="EventStreamClient.cs" />
     <Compile Include="IStreamHandler.cs" />
+    <Compile Include="JsonSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

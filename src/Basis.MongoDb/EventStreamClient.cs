@@ -10,6 +10,7 @@ namespace Basis.MongoDb
     {
         readonly IStreamHandler _streamHandler;
         readonly string _eventStoreListenUri;
+        readonly JsonSerializer _serializer = new JsonSerializer();
 
         long _lastSeqNo = -1;
         HubConnection _hubConnection;
@@ -36,11 +37,15 @@ namespace Basis.MongoDb
 
         async Task DispatchToStreamHandler(EventBatchDto dto)
         {
-            var events = dto.Events;
-
             try
             {
-                await _streamHandler.ProcessEvents(events);
+                var events = _serializer.Deserialize(dto.Events);
+
+                if (!(events is object[]))
+                {
+                    throw new ArgumentException(string.Format(@"Sorry! The following JSON object was not an object[]: {0}", _serializer.GetStringRepresentationSafe(dto.Events)));
+                }
+                await _streamHandler.ProcessEvents((object[])events);
             }
             catch (Exception exception)
             {

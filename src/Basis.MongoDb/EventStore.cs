@@ -101,7 +101,7 @@ namespace Basis.MongoDb
             _database.GetCollection<EventBatch>(_collectionName)
                 .Insert(new EventBatch
                 {
-                    Events = eventBatchToSave.Events.ToArray(),
+                    Events = eventBatchToSave.Events,
                     SeqNo = seqNoForThisEvent
                 });
             Console.WriteLine("Inserted!");

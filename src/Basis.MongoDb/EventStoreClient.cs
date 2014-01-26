@@ -8,6 +8,7 @@ namespace Basis.MongoDb
 {
     public class EventStoreClient : IDisposable
     {
+        readonly JsonSerializer _serializer = new JsonSerializer();
         readonly string _eventStoreListenUri;
         HubConnection _hubConnection;
         IHubProxy _eventStoreProxy;
@@ -26,7 +27,7 @@ namespace Basis.MongoDb
 
         public async Task Save(IEnumerable<object> events)
         {
-            await _eventStoreProxy.Invoke("Save", new EventBatchDto {Events = events.ToArray()});
+            await _eventStoreProxy.Invoke("Save", new EventBatchDto {Events = _serializer.Serialize(events)});
         }
 
         public void Dispose()
@@ -41,6 +42,6 @@ namespace Basis.MongoDb
 
     public class EventBatchDto
     {
-        public object[] Events { get; set; }
+        public byte[] Events { get; set; }
     }
 }
