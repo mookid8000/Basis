@@ -1,22 +1,31 @@
 ﻿<Project DefaultTargets="build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup>
-    <AllProjects Include="..\src\**\*.csproj" />
-  </ItemGroup>
-
   <PropertyGroup>
-    <BuildOutputFolder>..\deploy</BuildOutputFolder>
+    <Root>..</Root>
+    <Src>$(Root)\src</Src>
+
+    <BuildOutputFolder>$(Root)\deploy</BuildOutputFolder>
+    <BasisCoreOutput>$(BuildOutputFolder)\Basis</BasisCoreOutput>
   </PropertyGroup>
 
-  <Target Name="build" DependsOnTargets="compile_projects;copy_build_output" />
+  <ItemGroup>
+    <AllProjects Include="..\src\**\*.csproj" />
+    <BasisCoreProj Include="$(Src)\Basis.MongoDb\*.csproj"/>
+  </ItemGroup>
 
-  <Target Name="compile_projects">
-    <MSBuild Projects="@(AllProjects)" Targets="build" StopOnFirstFailure="true" Properties="Configuration=Release">
+  <Target Name="build" DependsOnTargets="clean_build_output; build_core; copy_build_output" />
+
+  <Target Name="build_core">
+    <MSBuild Projects="@(BasisCoreProj)" Targets="build" StopOnFirstFailure="true" Properties="Configuration=Release">
       <Output TaskParameter="TargetOutputs" ItemName="BuildOutput" />
     </MSBuild>
   </Target>
 
+  <Target Name="clean_build_output">
+    <RemoveDir Directories="$(BasisCoreOutput)" ContinueOnError="true"/>
+  </Target>
+
   <Target Name="copy_build_output">
-    <Copy SourceFiles="@(BuildOutput)" DestinationFolder="$(BuildOutputFolder)" />
+    <Copy SourceFiles="@(BuildOutput)" DestinationFolder="$(BasisCoreOutput)" />
   </Target>
 
 </Project>
