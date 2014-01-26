@@ -84,10 +84,12 @@
     <Compile Include="EventBatch.cs" />
     <Compile Include="EventStoreClient.cs" />
     <Compile Include="EventStore.cs" />
+    <Compile Include="EventStoreHub.cs" />
     <Compile Include="EventStreamClient.cs" />
     <Compile Include="IStreamHandler.cs" />
     <Compile Include="JsonSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SequenceNumberGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

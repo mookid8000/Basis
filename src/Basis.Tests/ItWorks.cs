@@ -12,12 +12,12 @@ namespace Basis.Tests
     [TestFixture]
     public class ItWorks : MongoFixture
     {
+        const string CollectionName = "events";
+        const string EventStoreListenUri = "http://localhost:3000";
         EventStreamClient _eventStreamClient;
         EventStore _eventStore;
         InlineStreamHandler _inlineStreamHandler;
         EventStoreClient _eventStoreClient;
-        const string CollectionName = "events";
-        const string EventStoreListenUri = "http://localhost:3000";
 
         protected override void DoSetUp()
         {
