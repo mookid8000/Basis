@@ -47,6 +47,7 @@ namespace Basis.MongoDb
             {
                 var batches = _database.GetCollection<EventBatch>(_collectionName)
                     .Find(Query<EventBatch>.GT(e => e.SeqNo, currentSeqNo))
+                    .SetSortOrder(SortBy<EventBatch>.Ascending(b => b.SeqNo))
                     .SetLimit(100)
                     .ToList();
 
