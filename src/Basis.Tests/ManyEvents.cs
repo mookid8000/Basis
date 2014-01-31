@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Basis.MongoDb;
@@ -103,6 +102,11 @@ namespace Basis.Tests
             _eventStreamClient.Start();
 
             Thread.Sleep(TimeSpan.FromSeconds(1));
+
+            using (Every5s(() => Console.WriteLine("{0} messages received", receivedNumbers.Count)))
+            {
+                allMessagesReceived.WaitOne();
+            }
 
             Assert.That(receivedNumbers.Count, Is.EqualTo(messageCount));
             CollectionAssert.AreEqual(Enumerable.Range(0, messageCount), receivedNumbers);

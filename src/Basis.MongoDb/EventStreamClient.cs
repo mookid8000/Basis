@@ -2,11 +2,13 @@
 using System.Threading.Tasks;
 using Basis.MongoDb.Messages;
 using Microsoft.AspNet.SignalR.Client;
+using NLog;
 
 namespace Basis.MongoDb
 {
     public class EventStreamClient : IDisposable
     {
+        static readonly Logger Log = LogManager.GetCurrentClassLogger();
         readonly IStreamHandler _streamHandler;
         readonly string _eventStoreListenUri;
         readonly JsonSerializer _serializer = new JsonSerializer();
@@ -24,7 +26,8 @@ namespace Basis.MongoDb
         public void Start()
         {
             _lastSeqNo = _streamHandler.GetLastSequenceNumber();
-            Console.WriteLine("Last seq no: {0}", _lastSeqNo);
+            
+            Log.Info("Last seq no: {0}", _lastSeqNo);
 
             _hubConnection = new HubConnection(_eventStoreListenUri);
             _eventStoreProxy = _hubConnection.CreateHubProxy("EventStoreHub");
@@ -45,7 +48,7 @@ namespace Basis.MongoDb
 
         async Task DispatchToStreamHandler(EventBatchDto dto)
         {
-            Console.WriteLine("Dispatching {0}", dto.SeqNo);
+            Log.Debug("Dispatching {0}", dto.SeqNo);
 
             try
             {
@@ -59,7 +62,7 @@ namespace Basis.MongoDb
             }
             catch (Exception exception)
             {
-                Console.WriteLine(exception);
+                Log.Warn(exception);
             }
         }
 
