@@ -1,6 +1,6 @@
 ﻿using MongoDB.Bson;
 
-namespace Basis.MongoDb
+namespace Basis.MongoDb.Messages
 {
     class EventBatch
     {

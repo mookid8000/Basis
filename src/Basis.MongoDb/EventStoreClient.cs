@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Basis.MongoDb.Messages;
 using Microsoft.AspNet.SignalR.Client;
 
 namespace Basis.MongoDb
@@ -38,10 +38,5 @@ namespace Basis.MongoDb
                 _hubConnection = null;
             }
         }
-    }
-
-    public class EventBatchDto
-    {
-        public byte[] Events { get; set; }
     }
 }

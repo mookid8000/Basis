@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Xml.Linq;
+using Basis.MongoDb.Messages;
 using Microsoft.AspNet.SignalR.Client;
 
 namespace Basis.MongoDb
@@ -31,12 +30,23 @@ namespace Basis.MongoDb
             _eventStoreProxy = _hubConnection.CreateHubProxy("EventStoreHub");
 
             _eventStoreProxy.On("Publish", (EventBatchDto dto) => DispatchToStreamHandler(dto));
+            _eventStoreProxy.On("Accept", (EventBatchDto dto) => DispatchToStreamHandler(dto));
 
             _hubConnection.Start().Wait();
+
+            EnsureWeCatchUp();
+        }
+
+        void EnsureWeCatchUp()
+        {
+            _eventStoreProxy.Invoke("RequestPlayback",
+                new RequestPlaybackArgs {CurrentSeqNo = _streamHandler.GetLastSequenceNumber()});
         }
 
         async Task DispatchToStreamHandler(EventBatchDto dto)
         {
+            Console.WriteLine("Dispatching {0}", dto.SeqNo);
+
             try
             {
                 var events = _serializer.Deserialize(dto.Events);

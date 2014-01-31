@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Basis.MongoDb.Messages;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin.Cors;
 using Microsoft.Owin.Hosting;
