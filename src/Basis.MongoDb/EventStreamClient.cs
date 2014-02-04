@@ -35,14 +35,14 @@ namespace Basis.MongoDb
             }
 
             _lastSeqNo = _streamHandler.GetLastSequenceNumber();
-            
+
             Log.Info("Starting event stream client for {0}", _eventStoreListenUri);
 
             _hubConnection = new HubConnection(_eventStoreListenUri);
             _eventStoreProxy = _hubConnection.CreateHubProxy(typeof(EventStoreHub).Name);
 
-            _eventStoreProxy.On("Publish", (PlaybackEventBatch dto) => DispatchToStreamHandler(dto));
-            _eventStoreProxy.On("Accept", (PlaybackEventBatch dto) => DispatchToStreamHandler(dto));
+            _eventStoreProxy.On<PlaybackEventBatch>("Publish", dto => DispatchToStreamHandler(dto));
+            _eventStoreProxy.On<PlaybackEventBatch>("Accept", dto => DispatchToStreamHandler(dto));
 
             Log.Debug("Opening connection");
             _hubConnection.Start().Wait();
@@ -56,7 +56,7 @@ namespace Basis.MongoDb
         void EnsureWeCatchUp()
         {
             _eventStoreProxy.Invoke("RequestPlayback",
-                new RequestPlaybackArgs {CurrentSeqNo = _streamHandler.GetLastSequenceNumber()});
+                new RequestPlaybackArgs { CurrentSeqNo = _streamHandler.GetLastSequenceNumber() });
         }
 
         async Task DispatchToStreamHandler(PlaybackEventBatch batch)
