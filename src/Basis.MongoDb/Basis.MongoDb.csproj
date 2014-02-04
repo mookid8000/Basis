@@ -88,10 +88,10 @@
     <Compile Include="Messages\EventBatchDto.cs" />
     <Compile Include="Persistence\PersistenceEvent.cs" />
     <Compile Include="Persistence\PersistenceEventBatch.cs" />
-    <Compile Include="EventStoreClient.cs" />
-    <Compile Include="EventStoreServer.cs" />
-    <Compile Include="EventStoreHub.cs" />
-    <Compile Include="EventStreamClient.cs" />
+    <Compile Include="Clients\EventStoreClient.cs" />
+    <Compile Include="Server\EventStoreServer.cs" />
+    <Compile Include="Server\EventStoreHub.cs" />
+    <Compile Include="Clients\EventStreamClient.cs" />
     <Compile Include="IStreamHandler.cs" />
     <Compile Include="JsonSerializer.cs" />
     <Compile Include="Messages\EventBatchToSave.cs" />

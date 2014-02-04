@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Basis.MongoDb.Messages;
+using Basis.MongoDb.Server;
 using Microsoft.AspNet.SignalR.Client;
 using NLog;
 
-namespace Basis.MongoDb
+namespace Basis.MongoDb.Clients
 {
     public class EventStoreClient : IDisposable
     {

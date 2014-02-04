@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Basis.MongoDb.Persistence;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin.Cors;
 using Microsoft.Owin.Hosting;
@@ -9,7 +8,7 @@ using MongoDB.Driver.Builders;
 using NLog;
 using Owin;
 
-namespace Basis.MongoDb
+namespace Basis.MongoDb.Server
 {
     public class EventStoreServer : IDisposable
     {

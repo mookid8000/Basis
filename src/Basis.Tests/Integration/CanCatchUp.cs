@@ -5,9 +5,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Basis.MongoDb;
+using Basis.MongoDb.Clients;
+using Basis.MongoDb.Server;
 using NUnit.Framework;
 
-namespace Basis.Tests
+namespace Basis.Tests.Integration
 {
     [TestFixture]
     public class CanCatchUp : MongoFixture

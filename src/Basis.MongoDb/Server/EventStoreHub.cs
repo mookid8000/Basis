@@ -10,7 +10,7 @@ using MongoDB.Driver;
 using MongoDB.Driver.Builders;
 using NLog;
 
-namespace Basis.MongoDb
+namespace Basis.MongoDb.Server
 {
     public class EventStoreHub : Hub
     {
