@@ -15,7 +15,6 @@ namespace Basis.Tests.Integration
     public class ManyEvents : MongoFixture
     {
         const string CollectionName = "events";
-        const string EventStoreListenUriFormatString = "http://localhost:{0}";
         EventStreamClient _eventStreamClient;
         EventStoreServer _eventStoreServer;
         InlineStreamHandler _inlineStreamHandler;
@@ -26,19 +25,13 @@ namespace Basis.Tests.Integration
             var database = GetDatabase();
 
             _inlineStreamHandler = new InlineStreamHandler();
-            var eventStoreListenUri = GetNewUri();
+            var eventStoreListenUri = UrlHelper.GetNextLocalhostUrl();
 
             _eventStoreServer = Track(new EventStoreServer(database, CollectionName, eventStoreListenUri));
             _eventStreamClient = Track(new EventStreamClient(_inlineStreamHandler, eventStoreListenUri));
             _eventStoreClient = Track(new EventStoreClient(eventStoreListenUri));
 
             database.DropCollection(CollectionName);
-        }
-
-        int portNumber = 3000;
-        string GetNewUri()
-        {
-            return string.Format(EventStoreListenUriFormatString, portNumber++);
         }
 
         class InlineStreamHandler : IStreamHandler

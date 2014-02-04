@@ -15,7 +15,6 @@ namespace Basis.Tests.Integration
     public class CanCatchUp : MongoFixture
     {
         const string CollectionName = "events";
-        const string EventStoreListenUri = "http://localhost:3000";
         EventStreamClient _eventStreamClient;
         EventStoreServer _eventStoreServer;
         InlineStreamHandler _inlineStreamHandler;
@@ -25,10 +24,12 @@ namespace Basis.Tests.Integration
         {
             var database = GetDatabase();
 
+            var eventStoreListenUri = UrlHelper.GetNextLocalhostUrl();
+
             _inlineStreamHandler = new InlineStreamHandler();
-            _eventStreamClient = Track(new EventStreamClient(_inlineStreamHandler, EventStoreListenUri));
-            _eventStoreServer = Track(new EventStoreServer(database, CollectionName, EventStoreListenUri));
-            _eventStoreClient = Track(new EventStoreClient(EventStoreListenUri));
+            _eventStreamClient = Track(new EventStreamClient(_inlineStreamHandler, eventStoreListenUri));
+            _eventStoreServer = Track(new EventStoreServer(database, CollectionName, eventStoreListenUri));
+            _eventStoreClient = Track(new EventStoreClient(eventStoreListenUri));
 
             database.DropCollection(CollectionName);
         }
