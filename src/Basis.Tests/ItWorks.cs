@@ -15,7 +15,7 @@ namespace Basis.Tests
         const string CollectionName = "events";
         const string EventStoreListenUri = "http://localhost:3000";
         EventStreamClient _eventStreamClient;
-        EventStore _eventStore;
+        EventStoreServer _eventStoreServer;
         InlineStreamHandler _inlineStreamHandler;
         EventStoreClient _eventStoreClient;
 
@@ -25,38 +25,10 @@ namespace Basis.Tests
 
             _inlineStreamHandler = new InlineStreamHandler();
             _eventStreamClient = Track(new EventStreamClient(_inlineStreamHandler, EventStoreListenUri));
-            _eventStore = Track(new EventStore(database, CollectionName, EventStoreListenUri));
+            _eventStoreServer = Track(new EventStoreServer(database, CollectionName, EventStoreListenUri));
             _eventStoreClient = Track(new EventStoreClient(EventStoreListenUri));
 
             database.DropCollection(CollectionName);
-        }
-
-        class InlineStreamHandler : IStreamHandler
-        {
-            readonly List<Action<IEnumerable<object>>> _batchHandlers = new List<Action<IEnumerable<object>>>();
-            long _lastSeqNo = -1;
-
-            public void Handle(Action<IEnumerable<object>> batchHandler)
-            {
-                _batchHandlers.Add(batchHandler);
-            }
-            public long GetLastSequenceNumber()
-            {
-                return _lastSeqNo;
-            }
-
-            public async Task ProcessEvents(IEnumerable<object> events)
-            {
-                foreach (var handler in _batchHandlers)
-                {
-                    handler(events);
-                }
-            }
-
-            public async Task Commit(long newLastSequenceNumber)
-            {
-                _lastSeqNo = newLastSequenceNumber;
-            }
         }
 
         [Test]
@@ -79,8 +51,8 @@ namespace Basis.Tests
                 }
             });
 
-            _eventStore.Start();
-            
+            _eventStoreServer.Start();
+
             _eventStreamClient.Start();
             _eventStoreClient.Start();
 
@@ -90,12 +62,36 @@ namespace Basis.Tests
             {
                 new SomeoneSaid {Value = "hello"},
                 new SomeoneSaid {Value = "world"}
-            })
-            .Wait();
+            }).Wait();
 
             Thread.Sleep(TimeSpan.FromSeconds(1));
 
             Assert.That(greeting.ToString(), Is.EqualTo("hello world"));
+        }
+
+        class InlineStreamHandler : IStreamHandler
+        {
+            readonly List<Action<IEnumerable<object>>> _batchHandlers = new List<Action<IEnumerable<object>>>();
+            long _lastSeqNo;
+
+            public void Handle(Action<IEnumerable<object>> batchHandler)
+            {
+                _batchHandlers.Add(batchHandler);
+            }
+            public long GetLastSequenceNumber()
+            {
+                return _lastSeqNo;
+            }
+
+            public async Task ProcessEvents(DeserializedEvent deserializedEvent)
+            {
+                foreach (var handler in _batchHandlers)
+                {
+                    handler(new[] { deserializedEvent.Event });
+                }
+
+                _lastSeqNo = deserializedEvent.SeqNo;
+            }
         }
 
         class SomeoneSaid

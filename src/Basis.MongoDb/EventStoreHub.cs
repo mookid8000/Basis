@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Basis.MongoDb.Messages;
+using Basis.MongoDb.Persistence;
 using Microsoft.AspNet.SignalR;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
@@ -13,31 +15,34 @@ namespace Basis.MongoDb
     public class EventStoreHub : Hub
     {
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
-        readonly MongoDatabase _database;
         readonly SequenceNumberGenerator _sequenceNumberGenerator;
-        readonly string _collectionName;
+        readonly MongoCollection<PersistenceEventBatch> _eventsCollection;
 
         public EventStoreHub(MongoDatabase database, SequenceNumberGenerator sequenceNumberGenerator, string collectionName)
         {
-            _database = database;
             _sequenceNumberGenerator = sequenceNumberGenerator;
-            _collectionName = collectionName;
+            _eventsCollection = database.GetCollection<PersistenceEventBatch>(collectionName);
         }
 
-        public async Task Save(EventBatchDto eventBatchToSave)
+        public async Task Save(EventBatchToSave eventBatchToSave)
         {
-            var seqNoForThisEvent = _sequenceNumberGenerator.GetNextSequenceNumber();
-
-            Log.Debug("Inserting {0}... ", seqNoForThisEvent);
-
-            _database.GetCollection<EventBatch>(_collectionName)
-                .Insert(new EventBatch
+            var events = eventBatchToSave.Events
+                .Select(bytes => new PersistenceEvent
                 {
-                    Events = eventBatchToSave.Events,
-                    SeqNo = seqNoForThisEvent
-                });
+                    Body = bytes,
+                    SeqNo = _sequenceNumberGenerator.GetNextSequenceNumber(),
+                    Meta = new Dictionary<string, string>()
+                })
+                .ToList();
 
-            await Clients.All.Publish(eventBatchToSave);
+            Log.Debug("Inserting {0}-{1}... ", events.First().SeqNo, events.Last().SeqNo);
+
+            _eventsCollection.Insert(new PersistenceEventBatch(events));
+
+            var playbackEvents = events.Select(e => new PlaybackEvent(e.SeqNo, e.Body));
+            var playbackEventBatch = new PlaybackEventBatch(playbackEvents);
+
+            await Clients.All.Publish(playbackEventBatch);
         }
 
         public async Task RequestPlayback(RequestPlaybackArgs args)
@@ -48,36 +53,49 @@ namespace Basis.MongoDb
             Log.Info("Playback requested by {0} from seq no {1}", Context.ConnectionId, currentSeqNo);
             var eventBatchesPlayedBack = 0;
 
-            do
+            try
             {
-                var eventBatches = _database.GetCollection<EventBatch>(_collectionName)
-                    .Find(Query<EventBatch>.GT(e => e.SeqNo, currentSeqNo))
-                    .SetSortOrder(SortBy<EventBatch>.Ascending(b => b.SeqNo))
-                    .SetLimit(100)
-                    .ToList();
-
-                eventBatchesPlayedBack += eventBatches.Count;
-
-                if (!eventBatches.Any()) break;
-
-                Log.Debug("Delivering batches {0} to {1}",
-                    string.Join(", ", eventBatches.Select(b => b.SeqNo), Context.ConnectionId));
-
-                foreach (var batch in eventBatches)
+                do
                 {
-                    await Clients.Caller.Accept(new EventBatchDto
-                    {
-                        SeqNo = batch.SeqNo,
-                        Events = batch.Events
-                    });
-                }
-                
-                currentSeqNo = eventBatches.Max(b => b.SeqNo);
-            } while (true);
+                    var minSeqNo = currentSeqNo;
+                    
+                    var eventBatches = _eventsCollection
+                        .Find(Query.GT("Events.SeqNo", minSeqNo))
+                        .SetSortOrder(SortBy.Ascending("FirstSeqNo"))
+                        .SetLimit(100)
+                        .ToList();
 
-            var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
-            Log.Info("{0} events played back in {1:0.0} s - that's {2:0.0} events/s",
-                eventBatchesPlayedBack, elapsedSeconds, eventBatchesPlayedBack/elapsedSeconds);
+                    eventBatchesPlayedBack += eventBatches.Count;
+
+                    if (!eventBatches.Any()) break;
+
+                    var playbackEvents = eventBatches
+                        .SelectMany(e => e.Events)
+                        .Where(e => e.SeqNo > minSeqNo)
+                        .OrderBy(e => e.SeqNo)
+                        .Select(e => new PlaybackEvent(e.SeqNo, e.Body))
+                        .Partition(20)
+                        .ToList();
+
+                    foreach (var batch in playbackEvents)
+                    {
+                        var playbackEventBatch = new PlaybackEventBatch(batch);
+
+                        await Clients.Caller.Accept(playbackEventBatch);
+
+                        currentSeqNo = batch.Max(b => b.SeqNo);
+                    }
+                } while (true);
+
+                var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
+
+                Log.Info("{0} events played back in {1:0.0} s - that's {2:0.0} events/s",
+                    eventBatchesPlayedBack, elapsedSeconds, eventBatchesPlayedBack/elapsedSeconds);
+            }
+            catch (Exception exception)
+            {
+                Log.WarnException("An exception occurred while attempting to play back events for client", exception);
+            }
         }
     }
 }

@@ -15,7 +15,7 @@ namespace Basis.Tests
         const string CollectionName = "events";
         const string EventStoreListenUri = "http://localhost:3000";
         EventStreamClient _eventStreamClient;
-        EventStore _eventStore;
+        EventStoreServer _eventStoreServer;
         InlineStreamHandler _inlineStreamHandler;
         EventStoreClient _eventStoreClient;
 
@@ -25,7 +25,7 @@ namespace Basis.Tests
 
             _inlineStreamHandler = new InlineStreamHandler();
             _eventStreamClient = Track(new EventStreamClient(_inlineStreamHandler, EventStoreListenUri));
-            _eventStore = Track(new EventStore(database, CollectionName, EventStoreListenUri));
+            _eventStoreServer = Track(new EventStoreServer(database, CollectionName, EventStoreListenUri));
             _eventStoreClient = Track(new EventStoreClient(EventStoreListenUri));
 
             database.DropCollection(CollectionName);
@@ -34,7 +34,7 @@ namespace Basis.Tests
         class InlineStreamHandler : IStreamHandler
         {
             readonly List<Action<IEnumerable<object>>> _batchHandlers = new List<Action<IEnumerable<object>>>();
-            long _lastSeqNo = -1;
+            long _lastSeqNo;
 
             public void Handle(Action<IEnumerable<object>> batchHandler)
             {
@@ -45,24 +45,21 @@ namespace Basis.Tests
                 return _lastSeqNo;
             }
 
-            public async Task ProcessEvents(IEnumerable<object> events)
+            public async Task ProcessEvents(DeserializedEvent deserializedEvent)
             {
                 foreach (var handler in _batchHandlers)
                 {
-                    handler(events);
+                    handler(new[] { deserializedEvent.Event });
                 }
-            }
 
-            public async Task Commit(long newLastSequenceNumber)
-            {
-                _lastSeqNo = newLastSequenceNumber;
+                _lastSeqNo = deserializedEvent.SeqNo;
             }
         }
 
         [Test]
         public void Yay()
         {
-            _eventStore.Start();
+            _eventStoreServer.Start();
             _eventStoreClient.Start();
 
             Thread.Sleep(TimeSpan.FromSeconds(1));

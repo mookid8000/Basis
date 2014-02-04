@@ -68,6 +68,8 @@ namespace Basis.Tests
         {
             DoTearDown();
 
+            _trackedDisposables.Reverse();
+
             _trackedDisposables.ForEach(d =>
             {
                 Console.WriteLine("Disposing {0}", d);

@@ -13,9 +13,9 @@ namespace Basis.Tests
     public class ManyEvents : MongoFixture
     {
         const string CollectionName = "events";
-        const string EventStoreListenUri = "http://localhost:3000";
+        const string EventStoreListenUriFormatString = "http://localhost:{0}";
         EventStreamClient _eventStreamClient;
-        EventStore _eventStore;
+        EventStoreServer _eventStoreServer;
         InlineStreamHandler _inlineStreamHandler;
         EventStoreClient _eventStoreClient;
 
@@ -24,17 +24,25 @@ namespace Basis.Tests
             var database = GetDatabase();
 
             _inlineStreamHandler = new InlineStreamHandler();
-            _eventStreamClient = Track(new EventStreamClient(_inlineStreamHandler, EventStoreListenUri));
-            _eventStore = Track(new EventStore(database, CollectionName, EventStoreListenUri));
-            _eventStoreClient = Track(new EventStoreClient(EventStoreListenUri));
+            var eventStoreListenUri = GetNewUri();
+
+            _eventStoreServer = Track(new EventStoreServer(database, CollectionName, eventStoreListenUri));
+            _eventStreamClient = Track(new EventStreamClient(_inlineStreamHandler, eventStoreListenUri));
+            _eventStoreClient = Track(new EventStoreClient(eventStoreListenUri));
 
             database.DropCollection(CollectionName);
+        }
+
+        int portNumber = 3000;
+        string GetNewUri()
+        {
+            return string.Format(EventStoreListenUriFormatString, portNumber++);
         }
 
         class InlineStreamHandler : IStreamHandler
         {
             readonly List<Action<IEnumerable<object>>> _batchHandlers = new List<Action<IEnumerable<object>>>();
-            long _lastSeqNo = -1;
+            long _lastSeqNo;
 
             public void Handle(Action<IEnumerable<object>> batchHandler)
             {
@@ -45,33 +53,34 @@ namespace Basis.Tests
                 return _lastSeqNo;
             }
 
-            public async Task ProcessEvents(IEnumerable<object> events)
+            public async Task ProcessEvents(DeserializedEvent deserializedEvent)
             {
                 foreach (var handler in _batchHandlers)
                 {
-                    handler(events);
+                    handler(new[] { deserializedEvent.Event });
                 }
-            }
 
-            public async Task Commit(long newLastSequenceNumber)
-            {
-                _lastSeqNo = newLastSequenceNumber;
+                _lastSeqNo = deserializedEvent.SeqNo;
             }
         }
 
-        [TestCase(10)]
-        [TestCase(100)]
-        [TestCase(1000)]
+        //[TestCase(10)]
+        //[TestCase(11)]
+        //[TestCase(12)]
+        //[TestCase(100)]
+        //[TestCase(1000)]
         [TestCase(2000)]
-        [TestCase(5000)]
-        [TestCase(10000)]
+        //[TestCase(5000)]
+        //[TestCase(10000)]
         public void Yay(int messageCount)
         {
             var allMessagesReceived = new ManualResetEvent(false);
-            _eventStore.Start();
-            _eventStoreClient.Start();
+
+            _eventStoreServer.Start();
 
             Thread.Sleep(TimeSpan.FromSeconds(1));
+
+            _eventStoreClient.Start();
 
             Enumerable.Range(0, messageCount)
                 .ToList()

@@ -84,17 +84,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EnumEx.cs" />
     <Compile Include="Messages\EventBatchDto.cs" />
-    <Compile Include="EventBatch.cs" />
+    <Compile Include="Persistence\PersistenceEvent.cs" />
+    <Compile Include="Persistence\PersistenceEventBatch.cs" />
     <Compile Include="EventStoreClient.cs" />
-    <Compile Include="EventStore.cs" />
+    <Compile Include="EventStoreServer.cs" />
     <Compile Include="EventStoreHub.cs" />
     <Compile Include="EventStreamClient.cs" />
     <Compile Include="IStreamHandler.cs" />
     <Compile Include="JsonSerializer.cs" />
+    <Compile Include="Messages\EventBatchToSave.cs" />
     <Compile Include="Messages\RequestPlaybackArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SequenceNumberGenerator.cs" />
+    <Compile Include="Sequencer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

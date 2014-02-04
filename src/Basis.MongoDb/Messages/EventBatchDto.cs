@@ -1,8 +1,27 @@
-﻿namespace Basis.MongoDb.Messages
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace Basis.MongoDb.Messages
 {
-    public class EventBatchDto
+    public class PlaybackEventBatch
     {
-        public long SeqNo { get; set; }
-        public byte[] Events { get; set; }
+        public PlaybackEventBatch(IEnumerable<PlaybackEvent> events)
+        {
+            Events = events.ToList();
+        }
+        public List<PlaybackEvent> Events { get; protected set; }
+    }
+
+
+    public class PlaybackEvent
+    {
+        public PlaybackEvent(long seqNo, byte[] body)
+        {
+            SeqNo = seqNo;
+            Body = body;
+        }
+
+        public long SeqNo { get; protected set; }
+        public byte[] Body { get; protected set; }
     }
 }

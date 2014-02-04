@@ -14,12 +14,16 @@ namespace Basis.MongoDb
 
         public byte[] Serialize(object obj)
         {
-            return DefaultEncoding.GetBytes(JsonConvert.SerializeObject(obj, Settings));
+            var stringifiedObject = JsonConvert.SerializeObject(obj, Settings);
+
+            return DefaultEncoding.GetBytes(stringifiedObject);
         }
 
         public object Deserialize(byte[] bytes)
         {
-            return JsonConvert.DeserializeObject(DefaultEncoding.GetString(bytes), Settings);
+            var stringifiedObject = DefaultEncoding.GetString(bytes);
+
+            return JsonConvert.DeserializeObject(stringifiedObject, Settings);
         }
 
         public string GetStringRepresentationSafe(byte[] bytes)

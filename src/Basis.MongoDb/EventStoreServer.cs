@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Linq;
-using Basis.MongoDb.Messages;
+using Basis.MongoDb.Persistence;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin.Cors;
 using Microsoft.Owin.Hosting;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
+using NLog;
 using Owin;
 
 namespace Basis.MongoDb
 {
-    public class EventStore : IDisposable
+    public class EventStoreServer : IDisposable
     {
+        static readonly Logger Log = LogManager.GetCurrentClassLogger();
         readonly string _listenUri;
         readonly string _collectionName;
         readonly MongoDatabase _database;
@@ -21,7 +23,7 @@ namespace Basis.MongoDb
 
         bool _started;
 
-        public EventStore(MongoDatabase database, string collectionName, string listenUri)
+        public EventStoreServer(MongoDatabase database, string collectionName, string listenUri)
         {
             _database = database;
             _collectionName = collectionName;
@@ -31,25 +33,38 @@ namespace Basis.MongoDb
 
         public void Start()
         {
+            if (_started)
+            {
+                throw new InvalidOperationException(string.Format("Event store server has already been started! It cannot be started twice"));
+            }
+
+            Log.Info("Starting event store server on {0}", _listenUri);
+
             if (!_database.GetCollectionNames().Contains(_collectionName))
             {
+                Log.Info("Collection {0} does not exist - will initialize it now", _collectionName);
                 try
                 {
                     _database.CreateCollection(_collectionName);
                     var collection = _database.GetCollection(_collectionName);
-                    collection.EnsureIndex(IndexKeys<EventBatch>.Ascending(b => b.SeqNo), IndexOptions.SetUnique(true));
+                    collection.EnsureIndex(IndexKeys.Ascending("Events.SeqNo"), IndexOptions.SetUnique(true));
                 }
                 catch { }
             }
 
+            Log.Debug("Starting OWIN host with SignalR hub");
             _host = WebApp.Start(_listenUri, a =>
             {
-                GlobalHost.DependencyResolver.Register(typeof(EventStoreHub), () => new EventStoreHub(_database, _sequenceNumberGenerator, _collectionName));
-
                 a.UseCors(CorsOptions.AllowAll);
-                a.MapSignalR();
+                
+                var hubConfiguration = new HubConfiguration();
+                hubConfiguration.Resolver.Register(typeof(EventStoreHub), () => new EventStoreHub(_database, _sequenceNumberGenerator, _collectionName));
+                hubConfiguration.EnableDetailedErrors = true;
+
+                a.RunSignalR(hubConfiguration);
             });
 
+            Log.Info("Event store server started");
             _started = true;
         }
 
@@ -57,9 +72,14 @@ namespace Basis.MongoDb
         {
             if (_host != null)
             {
+                Log.Info("Shutting down event store server on {0}", _listenUri);
                 _host.Dispose();
+                
                 _host = null;
+                Log.Info("Event store server stopped");
             }
+
+            _started = false;
         }
     }
 }
