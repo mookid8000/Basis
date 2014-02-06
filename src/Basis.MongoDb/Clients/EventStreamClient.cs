@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using Basis.MongoDb.Messages;
 using Basis.MongoDb.Server;
 using Microsoft.AspNet.SignalR.Client;
@@ -15,6 +16,7 @@ namespace Basis.MongoDb.Clients
         readonly string _eventStoreListenUri;
         readonly JsonSerializer _serializer = new JsonSerializer();
         readonly Sequencer _sequencer;
+        readonly Timer _periodicRecoveryTimer;
 
         long _lastSeqNo = -1;
         HubConnection _hubConnection;
@@ -26,6 +28,10 @@ namespace Basis.MongoDb.Clients
             _streamHandler = streamHandler;
             _eventStoreListenUri = eventStoreListenUri;
             _sequencer = new Sequencer(streamHandler);
+
+            _periodicRecoveryTimer = new Timer(200);
+            _periodicRecoveryTimer.Elapsed += (o, ea) => RequestMissingEvents();
+            _periodicRecoveryTimer.Start();
         }
 
         public void Start()
@@ -52,6 +58,14 @@ namespace Basis.MongoDb.Clients
             EnsureWeCatchUp();
 
             _started = true;
+        }
+
+        void RequestMissingEvents()
+        {
+            if (_sequencer.GetMissingSequenceNumbers().Any())
+            {
+                
+            }
         }
 
         void EnsureWeCatchUp()
@@ -81,6 +95,8 @@ namespace Basis.MongoDb.Clients
 
         public void Dispose()
         {
+            _periodicRecoveryTimer.Stop();
+
             if (_hubConnection != null)
             {
                 Log.Info("Shutting down event stream client for {0}", _eventStoreListenUri);
@@ -89,6 +105,8 @@ namespace Basis.MongoDb.Clients
                 _hubConnection = null;
                 Log.Info("Event stream client stopped");
             }
+
+            _periodicRecoveryTimer.Dispose();
 
             _started = false;
         }

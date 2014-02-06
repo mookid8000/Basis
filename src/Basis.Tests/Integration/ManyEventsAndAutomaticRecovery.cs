@@ -13,7 +13,7 @@ using Timer = System.Timers.Timer;
 namespace Basis.Tests.Integration
 {
     [TestFixture]
-    public class ManyEvents : MongoFixture
+    public class ManyEventsAndAutomaticRecovery : MongoFixture
     {
         const string CollectionName = "events";
         EventStreamClient _eventStreamClient;
@@ -55,7 +55,9 @@ namespace Basis.Tests.Integration
 
             var receivedNumbers = new ConcurrentQueue<int>();
             var storedEvents = 0;
+            var clientStarted = false;
 
+            using (var startTheClientTimer = new Timer(20))
             using (Every5s(() => Console.WriteLine("{0} events stored/{1} messages received", storedEvents, receivedNumbers.Count)))
             {
                 // now, start the client
@@ -72,6 +74,23 @@ namespace Basis.Tests.Integration
                     }
                 });
 
+                startTheClientTimer.Elapsed += delegate
+                {
+                    if (clientStarted) return;
+
+                    // start the client when 1/2 of the events have been stored
+                    if (storedEvents >= totalNumberOfEvents / 2)
+                    {
+                        Console.WriteLine("{0} events stored - starting the client", storedEvents);
+                        
+                        _eventStreamClient.Start();
+
+                        clientStarted = true;
+                    }
+                };
+                
+                startTheClientTimer.Start();
+
                 Enumerable.Range(0, totalNumberOfEvents)
                     .ToList()
                     .ForEach(i =>
@@ -83,10 +102,6 @@ namespace Basis.Tests.Integration
 
                         storedEvents++;
                     });
-
-                Thread.Sleep(TimeSpan.FromSeconds(2));
-
-                _eventStreamClient.Start();
 
                 allMessagesReceived.WaitOne();
             }

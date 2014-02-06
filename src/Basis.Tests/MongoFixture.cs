@@ -8,9 +8,13 @@ namespace Basis.Tests
 
         protected static MongoDatabase GetDatabase(string databaseName = null)
         {
-            return new MongoClient(MongoDbConnectionString)
+            var databaseNameToUse = databaseName ?? new MongoUrl(MongoDbConnectionString).DatabaseName;
+
+            var mongoDatabase = new MongoClient(MongoDbConnectionString)
                 .GetServer()
-                .GetDatabase(databaseName ?? new MongoUrl(MongoDbConnectionString).DatabaseName);
+                .GetDatabase(databaseNameToUse);
+
+            return mongoDatabase;
         }
     }
 }

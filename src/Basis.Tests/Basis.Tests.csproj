@@ -87,6 +87,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Integration\DropEvent.cs" />
+    <Compile Include="Integration\ManyEventsAndAutomaticRecovery.cs" />
     <Compile Include="Integration\ManyEvents.cs" />
     <Compile Include="Integration\CanCatchUp.cs" />
     <Compile Include="Integration\ItWorks.cs" />
