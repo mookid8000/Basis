@@ -12,7 +12,9 @@ namespace Basis.MongoDb
 
         public long GetNextSequenceNumber()
         {
-            return Interlocked.Increment(ref _sequenceNumber);
+            var seqNo = Interlocked.Increment(ref _sequenceNumber);
+
+            return seqNo;
         }
 
         public void StartWith(long sequenceNumber)

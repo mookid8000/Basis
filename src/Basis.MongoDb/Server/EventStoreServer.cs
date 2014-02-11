@@ -51,29 +51,39 @@ namespace Basis.MongoDb.Server
                     collection.EnsureIndex(IndexKeys<PersistenceEventBatch>.Ascending(b => b.FirstSeqNo), IndexOptions.SetUnique(true));
                 }
                 catch { }
+            }
 
-                var lastEvent = _database
-                    .GetCollection<PersistenceEventBatch>(_collectionName)
-                    .FindAll()
-                    .SetSortOrder(SortBy.Descending("FirstSeqNo"))
-                    .SetLimit(1)
-                    .FirstOrDefault();
+            var lastEvent = _database
+                .GetCollection<PersistenceEventBatch>(_collectionName)
+                .FindAll()
+                .SetSortOrder(SortBy.Descending("FirstSeqNo"))
+                .SetLimit(1)
+                .FirstOrDefault();
 
-                if (lastEvent != null)
-                {
-                    var mostRecentEventNumber = lastEvent.Events.Max(e => e.SeqNo);
-                    
-                    _sequenceNumberGenerator.StartWith(mostRecentEventNumber+1);
-                }
+            if (lastEvent != null)
+            {
+                var mostRecentEventNumber = lastEvent.Events.Max(e => e.SeqNo);
+
+                Log.Info("Initializing seq no generator to {0}", mostRecentEventNumber);
+
+                _sequenceNumberGenerator.StartWith(mostRecentEventNumber);
             }
 
             Log.Debug("Starting OWIN host with SignalR hub");
             _host = WebApp.Start(_listenUri, a =>
             {
                 a.UseCors(CorsOptions.AllowAll);
+
+                var resolver = new DefaultDependencyResolver();
+                resolver.Register(typeof(EventStoreHub), () => new EventStoreHub(_database, _sequenceNumberGenerator, _collectionName));
+
+                var hubConfiguration = new HubConfiguration
+                {
+                    EnableDetailedErrors = true,
+                    EnableJSONP = true,
+                    Resolver = resolver
+                };
                 
-                var hubConfiguration = new HubConfiguration();
-                hubConfiguration.Resolver.Register(typeof(EventStoreHub), () => new EventStoreHub(_database, _sequenceNumberGenerator, _collectionName));
                 hubConfiguration.EnableDetailedErrors = true;
 
                 a.RunSignalR(hubConfiguration);
