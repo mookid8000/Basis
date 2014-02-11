@@ -14,5 +14,10 @@ namespace Basis.MongoDb
         {
             return Interlocked.Increment(ref _sequenceNumber);
         }
+
+        public void StartWith(long sequenceNumber)
+        {
+            _sequenceNumber = sequenceNumber;
+        }
     }
 }

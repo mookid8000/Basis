@@ -8,7 +8,6 @@ using Basis.MongoDb;
 using Basis.MongoDb.Clients;
 using Basis.MongoDb.Server;
 using NUnit.Framework;
-using Timer = System.Timers.Timer;
 
 namespace Basis.Tests.Integration
 {

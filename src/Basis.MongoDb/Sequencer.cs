@@ -95,7 +95,7 @@ namespace Basis.MongoDb
 
         public long[] GetMissingSequenceNumbers()
         {
-            
+            return new long[0];
         }
     }
 

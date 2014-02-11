@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Linq;
+using Basis.MongoDb.Persistence;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin.Cors;
 using Microsoft.Owin.Hosting;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
+using MongoDB.Driver.Linq;
 using NLog;
 using Owin;
 
@@ -49,6 +51,20 @@ namespace Basis.MongoDb.Server
                     collection.EnsureIndex(IndexKeys.Ascending("Events.SeqNo"), IndexOptions.SetUnique(true));
                 }
                 catch { }
+
+                var lastEvent = _database
+                    .GetCollection<PersistenceEventBatch>(_collectionName)
+                    .FindAll()
+                    .SetSortOrder(SortBy.Descending("FirstSeqNo"))
+                    .SetLimit(1)
+                    .FirstOrDefault();
+
+                if (lastEvent != null)
+                {
+                    var mostRecentEventNumber = lastEvent.Events.Max(e => e.SeqNo);
+                    
+                    _sequenceNumberGenerator.StartWith(mostRecentEventNumber+1);
+                }
             }
 
             Log.Debug("Starting OWIN host with SignalR hub");
