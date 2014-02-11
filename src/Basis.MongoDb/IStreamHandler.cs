@@ -5,6 +5,6 @@ namespace Basis.MongoDb
     public interface IStreamHandler
     {
         long GetLastSequenceNumber();
-        Task ProcessEvents(DeserializedEvent deserializedEvent);
+        Task ProcessEvent(DeserializedEvent deserializedEvent);
     }
 }

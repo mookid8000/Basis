@@ -52,7 +52,7 @@ namespace Basis.MongoDb
                     {
                         try
                         {
-                            _streamHandler.ProcessEvents(deserializedEvent).Wait();
+                            _streamHandler.ProcessEvent(deserializedEvent).Wait();
                         }
                         catch (Exception exception)
                         {

@@ -92,7 +92,7 @@ namespace Basis.Tests.Integration
                     : 0;
             }
 
-            public async Task ProcessEvents(DeserializedEvent deserializedEvent)
+            public async Task ProcessEvent(DeserializedEvent deserializedEvent)
             {
                 var seqNo = deserializedEvent.SeqNo;
                 

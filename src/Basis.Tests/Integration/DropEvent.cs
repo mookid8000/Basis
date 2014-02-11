@@ -94,7 +94,7 @@ namespace Basis.Tests.Integration
                 return _lastSeqNo;
             }
 
-            public async Task ProcessEvents(DeserializedEvent deserializedEvent)
+            public async Task ProcessEvent(DeserializedEvent deserializedEvent)
             {
                 foreach (var handler in _batchHandlers)
                 {
