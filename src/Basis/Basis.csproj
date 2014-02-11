@@ -7,8 +7,8 @@
     <ProjectGuid>{5C5C1F22-99FD-4A57-AF6B-BE4803EA6C6D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Basis.MongoDb</RootNamespace>
-    <AssemblyName>Basis.MongoDb</AssemblyName>
+    <RootNamespace>Basis</RootNamespace>
+    <AssemblyName>Basis</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
@@ -101,6 +101,7 @@
     <Compile Include="Sequencer.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Basis.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

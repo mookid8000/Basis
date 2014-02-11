@@ -104,9 +104,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Basis.MongoDb\Basis.MongoDb.csproj">
+    <ProjectReference Include="..\Basis\Basis.csproj">
       <Project>{5C5C1F22-99FD-4A57-AF6B-BE4803EA6C6D}</Project>
-      <Name>Basis.MongoDb</Name>
+      <Name>Basis</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

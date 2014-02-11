@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Basis</id>
+    <version>1.0.0</version>
+    <authors>@mookid8000,@ssboisen</authors>
+    <owners>@mookid8000,@ssboisen</owners>
+    <!--<licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
+    <projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
+    <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Very very simple event sourcing toolkit for distribution of events.</description>
+    <copyright>Copyright 2014</copyright>
+    <tags>event-sourcing cqrs event-store ddd domain-driven-design</tags>
+    <dependencies>
+      <dependency id="Microsoft.AspNet.Cors" version="5.0.0" />
+      <dependency id="Microsoft.AspNet.SignalR.Client" version="2.0.1" />
+      <dependency id="Microsoft.AspNet.SignalR.Core" version="2.0.1" />
+      <dependency id="Microsoft.AspNet.SignalR.SelfHost" version="2.0.1" />
+      <dependency id="Microsoft.Owin" version="2.0.2" />
+      <dependency id="Microsoft.Owin.Cors" version="2.0.2" />
+      <dependency id="Microsoft.Owin.Diagnostics" version="2.0.2" />
+      <dependency id="Microsoft.Owin.Host.HttpListener" version="2.0.2" />
+      <dependency id="Microsoft.Owin.Hosting" version="2.0.2" />
+      <dependency id="Microsoft.Owin.Security" version="2.0.2" />
+      <dependency id="Microsoft.Owin.SelfHost" version="2.0.2" />
+      <dependency id="mongocsharpdriver" version="1.8.3" />
+      <dependency id="Newtonsoft.Json" version="5.0.8" />
+      <dependency id="NLog" version="2.1.0" />
+      <dependency id="Owin" version="1.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="**\bin\Release\Basis.dll" target="lib\NET45"/>
+  </files>
+</package>

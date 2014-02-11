@@ -5,11 +5,13 @@
 
     <BuildOutputFolder>$(Root)\deploy</BuildOutputFolder>
     <BasisCoreOutput>$(BuildOutputFolder)\Basis</BasisCoreOutput>
+    <PackagesOutput>$(BuildOutputFolder)\Packages</PackagesOutput>
+    <Nuget>$(Src)\.nuget\nuget.exe</Nuget>
   </PropertyGroup>
 
   <ItemGroup>
     <AllProjects Include="..\src\**\*.csproj" />
-    <BasisCoreProj Include="$(Src)\Basis.MongoDb\*.csproj"/>
+    <BasisCoreProj Include="$(Src)\Basis\*.csproj"/>
   </ItemGroup>
 
   <Target Name="build" DependsOnTargets="clean_build_output; build_core; copy_build_output" />
@@ -26,6 +28,15 @@
 
   <Target Name="copy_build_output">
     <Copy SourceFiles="@(BuildOutput)" DestinationFolder="$(BasisCoreOutput)" />
+  </Target>
+
+  <Target Name="nuget_pack">
+    <ItemGroup>
+      <NuSpecs Include="$(Src)\**\*.nuspec"/>
+    </ItemGroup>
+    <RemoveDir Directories="$(PackagesOutput)" ContinueOnError="True"/>
+    <MakeDir Directories="$(PackagesOutput)"/>
+    <Exec Command="$(Nuget) pack @(NuSpecs) -OutputDir $(PackagesOutput)" />
   </Target>
 
 </Project>
