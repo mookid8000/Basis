@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Basis.MongoDb.Persistence
+namespace Basis.Persistence
 {
     class PersistenceEvent
     {

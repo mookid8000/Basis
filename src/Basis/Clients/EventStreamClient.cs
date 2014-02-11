@@ -2,12 +2,12 @@
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
-using Basis.MongoDb.Messages;
-using Basis.MongoDb.Server;
+using Basis.Messages;
+using Basis.Server;
 using Microsoft.AspNet.SignalR.Client;
 using NLog;
 
-namespace Basis.MongoDb.Clients
+namespace Basis.Clients
 {
     public class EventStreamClient : IDisposable
     {

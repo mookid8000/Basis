@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Basis.MongoDb
+namespace Basis
 {
     public interface IStreamHandler
     {

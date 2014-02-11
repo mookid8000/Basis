@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 
-namespace Basis.MongoDb
+namespace Basis
 {
     public class Sequencer : IDisposable
     {

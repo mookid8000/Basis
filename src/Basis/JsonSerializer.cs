@@ -2,7 +2,7 @@
 using System.Text;
 using Newtonsoft.Json;
 
-namespace Basis.MongoDb
+namespace Basis
 {
     public class JsonSerializer
     {

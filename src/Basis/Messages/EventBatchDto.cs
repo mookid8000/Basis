@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Basis.MongoDb.Messages
+namespace Basis.Messages
 {
     public class PlaybackEventBatch
     {

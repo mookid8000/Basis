@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Basis.MongoDb.Messages;
-using Basis.MongoDb.Persistence;
+using Basis.Messages;
+using Basis.Persistence;
 using Microsoft.AspNet.SignalR;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
 using NLog;
 
-namespace Basis.MongoDb.Server
+namespace Basis.Server
 {
     public class EventStoreHub : Hub
     {

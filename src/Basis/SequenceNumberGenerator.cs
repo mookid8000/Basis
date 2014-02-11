@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace Basis.MongoDb
+namespace Basis
 {
     public class SequenceNumberGenerator
     {

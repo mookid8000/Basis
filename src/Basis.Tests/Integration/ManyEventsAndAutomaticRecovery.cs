@@ -4,9 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Basis.MongoDb;
-using Basis.MongoDb.Clients;
-using Basis.MongoDb.Server;
+using Basis.Clients;
+using Basis.Server;
 using NUnit.Framework;
 using Timer = System.Timers.Timer;
 

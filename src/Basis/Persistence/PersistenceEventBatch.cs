@@ -2,7 +2,7 @@
 using System.Linq;
 using MongoDB.Bson;
 
-namespace Basis.MongoDb.Persistence
+namespace Basis.Persistence
 {
     class PersistenceEventBatch
     {

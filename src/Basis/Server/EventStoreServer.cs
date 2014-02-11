@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Linq;
-using Basis.MongoDb.Persistence;
+using Basis.Persistence;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin.Cors;
 using Microsoft.Owin.Hosting;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
-using MongoDB.Driver.Linq;
 using NLog;
 using Owin;
 
-namespace Basis.MongoDb.Server
+namespace Basis.Server
 {
     public class EventStoreServer : IDisposable
     {
