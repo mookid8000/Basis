@@ -39,4 +39,11 @@
     <Exec Command="$(Nuget) pack @(NuSpecs) -OutputDir $(PackagesOutput)" />
   </Target>
 
+  <Target Name="nuget_push" DependsOnTargets="build;nuget_pack">
+    <ItemGroup>
+      <NuGetPackages Include="$(PackagesOutput)\*.nupkg"/>
+    </ItemGroup>
+    <Exec Command="$(Nuget) push @(NuGetPackages)" />
+  </Target>
+  
 </Project>

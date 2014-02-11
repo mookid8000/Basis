@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>Basis</id>
-    <version>1.0.0</version>
+    <id>Basis.Server</id>
+    <version>0.0.2</version>
     <authors>@mookid8000,@ssboisen</authors>
     <owners>@mookid8000,@ssboisen</owners>
     <!--<licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
