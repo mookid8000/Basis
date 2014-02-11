@@ -43,10 +43,19 @@ namespace Basis.MongoDb.Clients
 
         public async Task Save(IEnumerable<object> events)
         {
-            await _eventStoreProxy.Invoke("Save", new EventBatchToSave
+            try
             {
-                Events = events.Select(e => _serializer.Serialize(e)).ToArray()
-            });
+                await _eventStoreProxy.Invoke("Save", new EventBatchToSave
+                {
+                    Events = events.Select(e => _serializer.Serialize(e)).ToArray()
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(
+                    string.Format("Exception occured while trying to store the following types of events: {0}",
+                        string.Join(",", events.Select(t => t.GetType().Name))), ex);
+            }
         }
 
         public void Dispose()

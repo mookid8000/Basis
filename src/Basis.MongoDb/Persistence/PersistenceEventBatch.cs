@@ -16,7 +16,8 @@ namespace Basis.MongoDb.Persistence
 
         public long FirstSeqNo
         {
-            get { return Events.First().SeqNo; }
+            get { return Events.Min(e => e.SeqNo); }
+            protected set { }
         }
     }
 }

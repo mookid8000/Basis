@@ -14,6 +14,7 @@ namespace Basis.MongoDb.Server
 {
     public class EventStoreHub : Hub
     {
+        private const string StreamClientsGroupName = "stream_clients";
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
         readonly SequenceNumberGenerator _sequenceNumberGenerator;
         readonly MongoCollection<PersistenceEventBatch> _eventsCollection;
@@ -37,16 +38,18 @@ namespace Basis.MongoDb.Server
 
             Log.Debug("Inserting {0}-{1}... ", events.First().SeqNo, events.Last().SeqNo);
 
-            _eventsCollection.Insert(new PersistenceEventBatch(events));
+            _eventsCollection.Insert(new PersistenceEventBatch(events), WriteConcern.Acknowledged);
 
             var playbackEvents = events.Select(e => new PlaybackEvent(e.SeqNo, e.Body));
             var playbackEventBatch = new PlaybackEventBatch(playbackEvents);
 
-            await Clients.All.Publish(playbackEventBatch);
+            await Clients.Group(StreamClientsGroupName).Publish(playbackEventBatch);
         }
 
         public async Task RequestPlayback(RequestPlaybackArgs args)
         {
+            await Groups.Add(Context.ConnectionId, StreamClientsGroupName);
+
             var currentSeqNo = args.CurrentSeqNo;
 
             var stopwatch = Stopwatch.StartNew();
