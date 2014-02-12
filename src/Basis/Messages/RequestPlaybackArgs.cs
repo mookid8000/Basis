@@ -2,6 +2,11 @@
 {
     public class RequestPlaybackArgs
     {
-        public long CurrentSeqNo { get; set; }     
+        public RequestPlaybackArgs(long currentSeqNo)
+        {
+            CurrentSeqNo = currentSeqNo;
+        }
+
+        public long CurrentSeqNo { get; protected set; }     
     }
 }

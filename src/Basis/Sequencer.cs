@@ -8,7 +8,7 @@ namespace Basis
     public class Sequencer : IDisposable
     {
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
-        readonly ConcurrentSortedSet<DeserializedEvent> _events = new ConcurrentSortedSet<DeserializedEvent>(new DeserializedEventComparer());
+        readonly ConcurrentSortedSet _events = new ConcurrentSortedSet(new DeserializedEventComparer());
         readonly IStreamHandler _streamHandler;
         readonly Thread _dispatcher;
 
@@ -27,6 +27,12 @@ namespace Basis
         {
             _events.Add(deserializedEvent);
 
+            _dispatcherThreadWorkSignal.Release();
+        }
+
+        public void RunDispatcherForSafetysSake()
+        {
+            Log.Info("Running the dispatcher - just in case - we have {0} events", _events.Count);
             _dispatcherThreadWorkSignal.Release();
         }
 
@@ -57,8 +63,15 @@ namespace Basis
             DeserializedEvent deserializedEvent;
 
             while ((deserializedEvent = _events.FirstOrDefault()) != null
-                   && deserializedEvent.SeqNo == expectedNextSequenceNumber)
+                   && deserializedEvent.SeqNo <= expectedNextSequenceNumber)
             {
+                if (deserializedEvent.SeqNo < expectedNextSequenceNumber)
+                {
+                    Log.Debug("Skipping {0}", deserializedEvent.SeqNo);
+                    _events.Remove(deserializedEvent);
+                    continue;
+                }
+
                 try
                 {
                     _streamHandler.ProcessEvent(deserializedEvent).Wait();
@@ -98,7 +111,9 @@ namespace Basis
 
         public long[] GetMissingSequenceNumbers()
         {
-            return new long[0];
+            var lastSequenceNumber = _streamHandler.GetLastSequenceNumber();
+            
+            return _events.GetGaps(lastSequenceNumber);
         }
     }
 }

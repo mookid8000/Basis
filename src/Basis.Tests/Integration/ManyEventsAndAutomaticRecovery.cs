@@ -47,16 +47,13 @@ namespace Basis.Tests.Integration
             var allMessagesReceived = new ManualResetEvent(false);
 
             _eventStoreServer.Start();
-
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-
             _eventStoreClient.Start();
 
             var receivedNumbers = new ConcurrentQueue<int>();
             var storedEvents = 0;
             var clientStarted = false;
 
-            using (var startTheClientTimer = new Timer(20))
+            using (var startTheClientTimer = new Timer(100))
             using (Every5s(() => Console.WriteLine("{0} events stored/{1} messages received", storedEvents, receivedNumbers.Count)))
             {
                 // now, start the client
@@ -80,11 +77,11 @@ namespace Basis.Tests.Integration
                     // start the client when 1/2 of the events have been stored
                     if (storedEvents >= totalNumberOfEvents / 2)
                     {
-                        Console.WriteLine("{0} events stored - starting the client", storedEvents);
+                        clientStarted = true;
+
+                        Console.WriteLine("{0} events stored - starting the client now...", storedEvents);
                         
                         _eventStreamClient.Start();
-
-                        clientStarted = true;
                     }
                 };
                 

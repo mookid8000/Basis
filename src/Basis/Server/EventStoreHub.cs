@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Basis.Messages;
 using Basis.Persistence;
 using Microsoft.AspNet.SignalR;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
 using NLog;
@@ -46,6 +47,41 @@ namespace Basis.Server
             await Clients.Group(StreamClientsGroupName).Publish(playbackEventBatch);
         }
 
+        public async Task RequestSpecificEvents(RequestSpecificEventsArgs args)
+        {
+            await Groups.Add(Context.ConnectionId, StreamClientsGroupName);
+
+            var stopwatch = Stopwatch.StartNew();
+
+            var eventNumbers = args.EventNumbers;
+
+            Log.Info("Specific events requested by {0}: {1}", Context.ConnectionId, string.Join(", ", eventNumbers));
+
+            try
+            {
+                var specificEvents = _eventsCollection
+                    .Find(Query.In("Events.SeqNo", eventNumbers.Select(n => (BsonValue) n)))
+                    .ToList()
+                    .SelectMany(b => b.Events)
+                    .Where(e => eventNumbers.Contains(e.SeqNo))
+                    .Select(e => new PlaybackEvent(e.SeqNo, e.Body))
+                    .ToList();
+
+                var playbackEventBatch = new PlaybackEventBatch(specificEvents);
+
+                await Clients.Caller.Accept(playbackEventBatch);
+
+                var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
+
+                Log.Info("{0} events played back in {1:0.0} s - that's {2:0.0} events/s",
+                    specificEvents.Count, elapsedSeconds, specificEvents.Count/elapsedSeconds);
+            }
+            catch (Exception exception)
+            {
+                Log.WarnException("An exception occurred while attempting to retrieve specific events for client", exception);
+            }
+        }
+
         public async Task RequestPlayback(RequestPlaybackArgs args)
         {
             await Groups.Add(Context.ConnectionId, StreamClientsGroupName);
@@ -54,7 +90,7 @@ namespace Basis.Server
 
             var stopwatch = Stopwatch.StartNew();
             Log.Info("Playback requested by {0} from seq no {1}", Context.ConnectionId, currentSeqNo);
-            var eventBatchesPlayedBack = 0;
+            var eventsPlayedBack = 0;
 
             try
             {
@@ -68,8 +104,6 @@ namespace Basis.Server
                         .SetLimit(100)
                         .ToList();
 
-                    eventBatchesPlayedBack += eventBatches.Count;
-
                     if (!eventBatches.Any()) break;
 
                     var playbackEvents = eventBatches
@@ -79,6 +113,8 @@ namespace Basis.Server
                         .Select(e => new PlaybackEvent(e.SeqNo, e.Body))
                         .Partition(20)
                         .ToList();
+
+                    eventsPlayedBack += playbackEvents.Count;
 
                     foreach (var batch in playbackEvents)
                     {
@@ -93,7 +129,7 @@ namespace Basis.Server
                 var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
 
                 Log.Info("{0} events played back in {1:0.0} s - that's {2:0.0} events/s",
-                    eventBatchesPlayedBack, elapsedSeconds, eventBatchesPlayedBack/elapsedSeconds);
+                    eventsPlayedBack, elapsedSeconds, eventsPlayedBack/elapsedSeconds);
             }
             catch (Exception exception)
             {

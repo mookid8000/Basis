@@ -29,7 +29,7 @@ namespace Basis.Clients
             _eventStoreListenUri = eventStoreListenUri;
             _sequencer = new Sequencer(streamHandler);
 
-            _periodicRecoveryTimer = new Timer(200);
+            _periodicRecoveryTimer = new Timer(5000);
             _periodicRecoveryTimer.Elapsed += (o, ea) => RequestMissingEvents();
             _periodicRecoveryTimer.Start();
         }
@@ -62,16 +62,25 @@ namespace Basis.Clients
 
         void RequestMissingEvents()
         {
-            if (_sequencer.GetMissingSequenceNumbers().Any())
+            var missingSequenceNumbers = _sequencer.GetMissingSequenceNumbers();
+
+            if (!missingSequenceNumbers.Any())
             {
-                
+                Log.Info("Checked for missing sequence numbers - none were found :)");
+                _sequencer.RunDispatcherForSafetysSake();
+                return;
             }
+
+            Log.Warn("Detected that {0} seq nos were missing - sending request for the first 1000", missingSequenceNumbers.Length);
+
+            var first1000 = missingSequenceNumbers.OrderBy(s => s).Take(1000).ToArray();
+
+            _eventStoreProxy.Invoke("RequestSpecificEvents", new RequestSpecificEventsArgs(first1000));
         }
 
         void EnsureWeCatchUp()
         {
-            _eventStoreProxy.Invoke("RequestPlayback",
-                new RequestPlaybackArgs { CurrentSeqNo = _streamHandler.GetLastSequenceNumber() });
+            _eventStoreProxy.Invoke("RequestPlayback", new RequestPlaybackArgs(_streamHandler.GetLastSequenceNumber()));
         }
 
         async Task DispatchToStreamHandler(PlaybackEventBatch batch)

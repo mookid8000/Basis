@@ -90,6 +90,7 @@
     <Compile Include="DeserializedEventComparer.cs" />
     <Compile Include="EnumEx.cs" />
     <Compile Include="Messages\EventBatchDto.cs" />
+    <Compile Include="Messages\RequestSpecificEventsArgs.cs" />
     <Compile Include="Persistence\PersistenceEvent.cs" />
     <Compile Include="Persistence\PersistenceEventBatch.cs" />
     <Compile Include="Clients\EventStoreClient.cs" />
