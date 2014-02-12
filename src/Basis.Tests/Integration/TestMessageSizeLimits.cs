@@ -8,19 +8,14 @@ using NUnit.Framework;
 
 namespace Basis.Tests.Integration
 {
-    [TestFixture]
+    [TestFixture, Explicit]
     public class TestMessageSizeLimits : MongoFixture
     {
-        //[TestCase(1024 * 32)]
-        //[TestCase(1024 * 33)]
-        //[TestCase(1024 * 34)]
-        //[TestCase(1024 * 35)]
-        //[TestCase(1024 * 36)]
-        //[TestCase(1024 * 37)]
-        //[TestCase(1024 * 38)]
-        //[TestCase(1024 * 39)]
-        //[TestCase(1024 * 40)]
+        [TestCase(1024 * 32)]
+        [TestCase(1024 * 48)]
         [TestCase(1024 * 64)]
+        [TestCase(1024 * 72)]
+        [TestCase(1024 * 96)]
         [TestCase(1024 * 128)]
         [TestCase(1024 * 256)]
         [TestCase(1024 * 512)]
