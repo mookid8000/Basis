@@ -12,9 +12,9 @@ namespace Basis.Clients
     public class EventStreamClient : IDisposable
     {
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        readonly JsonSerializer _serializer = new JsonSerializer();
         readonly IStreamHandler _streamHandler;
         readonly string _eventStoreListenUri;
-        readonly JsonSerializer _serializer = new JsonSerializer();
         readonly Sequencer _sequencer;
         readonly Timer _periodicRecoveryTimer;
 

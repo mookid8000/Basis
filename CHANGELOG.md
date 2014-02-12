@@ -7,3 +7,7 @@
 * 0.0.2: Renamed package and did some more stuff.
 
 * 0.0.3: Added this changelog and corrected some namespaces.
+
+* 0.0.4: Nudged some smallish things around.
+
+* 0.0.5: Better serialization/deserialization exceptions.

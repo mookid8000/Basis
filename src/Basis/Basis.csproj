@@ -84,7 +84,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConcurrentSortedSet.cs" />
     <Compile Include="Config.cs" />
+    <Compile Include="DeserializedEvent.cs" />
+    <Compile Include="DeserializedEventComparer.cs" />
     <Compile Include="EnumEx.cs" />
     <Compile Include="Messages\EventBatchDto.cs" />
     <Compile Include="Persistence\PersistenceEvent.cs" />

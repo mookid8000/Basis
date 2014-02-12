@@ -14,8 +14,10 @@ namespace Basis.Clients
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
         readonly JsonSerializer _serializer = new JsonSerializer();
         readonly string _eventStoreListenUri;
+
         HubConnection _hubConnection;
         IHubProxy _eventStoreProxy;
+        
         bool _started;
 
         public EventStoreClient(string eventStoreListenUri)
@@ -43,18 +45,20 @@ namespace Basis.Clients
 
         public async Task Save(IEnumerable<object> events)
         {
+            var list = events.ToList();
+
             try
             {
                 await _eventStoreProxy.Invoke("Save", new EventBatchToSave
                 {
-                    Events = events.Select(e => _serializer.Serialize(e)).ToArray()
+                    Events = list
+                        .Select(e => _serializer.Serialize(e))
+                        .ToArray()
                 });
             }
             catch (Exception ex)
             {
-                throw new ApplicationException(
-                    string.Format("Exception occured while trying to store the following types of events: {0}",
-                        string.Join(",", events.Select(t => t.GetType().Name))), ex);
+                throw new ApplicationException(string.Format("Exception occured while trying to store the following events: {0}", string.Join(", ", list)), ex);
             }
         }
 
