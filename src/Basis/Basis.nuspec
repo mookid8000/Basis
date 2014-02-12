@@ -2,11 +2,11 @@
 <package >
   <metadata>
     <id>Basis.Server</id>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
     <authors>@mookid8000,@ssboisen</authors>
     <owners>@mookid8000,@ssboisen</owners>
-    <!--<licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
-    <projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+    <!--<projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
     <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Very very simple event sourcing toolkit for distribution of events.</description>
