@@ -78,12 +78,10 @@ namespace Basis.Server
 
                 var hubConfiguration = new HubConfiguration
                 {
-                    EnableDetailedErrors = true,
+                    EnableDetailedErrors = Config.CurrentBuildConfig == Config.BuildConfig.Debug,
                     EnableJSONP = true,
                     Resolver = resolver
                 };
-                
-                hubConfiguration.EnableDetailedErrors = true;
 
                 a.RunSignalR(hubConfiguration);
             });
@@ -98,7 +96,7 @@ namespace Basis.Server
             {
                 Log.Info("Shutting down event store server on {0}", _listenUri);
                 _host.Dispose();
-                
+
                 _host = null;
                 Log.Info("Event store server stopped");
             }

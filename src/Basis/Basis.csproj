@@ -84,6 +84,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config.cs" />
     <Compile Include="EnumEx.cs" />
     <Compile Include="Messages\EventBatchDto.cs" />
     <Compile Include="Persistence\PersistenceEvent.cs" />
