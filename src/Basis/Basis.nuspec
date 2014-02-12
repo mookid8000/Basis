@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Basis.Server</id>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
     <authors>@mookid8000,@ssboisen</authors>
     <owners>@mookid8000,@ssboisen</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
