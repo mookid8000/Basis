@@ -10,11 +10,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AllProjects Include="..\src\**\*.csproj" />
+    <AllProjects Include="$(Src)\**\*.csproj" />
+    
     <BasisCoreProj Include="$(Src)\Basis\*.csproj"/>
+    
+    <BasisTestProj Include="$(Src)\*.Tests\*.csproj"/>
   </ItemGroup>
 
   <Target Name="build" DependsOnTargets="clean_build_output; build_core; copy_build_output" />
+  
+  <Target Name="build_tests" DependsOnTargets="clean_build_output; build_test_projects" />
 
   <Target Name="build_core">
     <MSBuild Projects="@(BasisCoreProj)" Targets="build" StopOnFirstFailure="true" Properties="Configuration=Release">
@@ -22,8 +27,15 @@
     </MSBuild>
   </Target>
 
+  <Target Name="build_test_projects">
+    <MSBuild Projects="@(BasisTestProj)" Targets="build" StopOnFirstFailure="true" Properties="Configuration=Release">
+      <Output TaskParameter="TargetOutputs" ItemName="BuildOutput" />
+    </MSBuild>
+  </Target>
+
   <Target Name="clean_build_output">
     <RemoveDir Directories="$(BasisCoreOutput)" ContinueOnError="true"/>
+    <MSBuild Projects="$(Src)\Basis.sln" Targets="Clean"/>
   </Target>
 
   <Target Name="copy_build_output">
