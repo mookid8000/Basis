@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
@@ -13,13 +17,23 @@ namespace Basis
             TypeNameHandling = TypeNameHandling.All
         };
 
+        const byte NotValidFirstByteOfUtf8EncodedJson = (byte) '!';
+
+        const int CompressionThreshold = 2048;
+
         public byte[] Serialize(object obj)
         {
             try
             {
                 var stringifiedObject = JsonConvert.SerializeObject(obj, Settings);
+                var bytes = DefaultEncoding.GetBytes(stringifiedObject);
 
-                return DefaultEncoding.GetBytes(stringifiedObject);
+                if (bytes.Length > CompressionThreshold)
+                {
+                    bytes = Compress(bytes);
+                }
+
+                return bytes;
             }
             catch (Exception exception)
             {
@@ -32,7 +46,7 @@ namespace Basis
         {
             try
             {
-                var stringifiedObject = DefaultEncoding.GetString(bytes);
+                var stringifiedObject = DefaultEncoding.GetString(PossiblyDecompress(bytes));
 
                 return JsonConvert.DeserializeObject(stringifiedObject, Settings);
             }
@@ -43,13 +57,56 @@ namespace Basis
             }
         }
 
+        public byte[] Compress(byte[] input)
+        {
+            using (var output = new MemoryStream())
+            {
+                using (var zip = new GZipStream(output, CompressionMode.Compress))
+                {
+                    zip.Write(input, 0, input.Length);
+                }
+
+                var list = output.ToArray().ToList();
+                list.Insert(0, NotValidFirstByteOfUtf8EncodedJson);
+                return list.ToArray();
+            }
+        }
+
+        public byte[] PossiblyDecompress(byte[] input)
+        {
+            if (input.Length == 0) return input;
+            if (input[0] != NotValidFirstByteOfUtf8EncodedJson) return input;
+
+            input = input.Skip(1).ToArray();
+
+            using (var inputStream = new MemoryStream(input))
+            {
+                using (var zip = new GZipStream(inputStream, CompressionMode.Decompress))
+                {
+                    var bytes = new List<byte>();
+                    var b = zip.ReadByte();
+                    while (b != -1)
+                    {
+                        bytes.Add((byte)b);
+                        b = zip.ReadByte();
+                    }
+                    return bytes.ToArray();
+                }
+            }
+        }
+
         string GetStringRepresentationSafe(byte[] bytes)
         {
+            if (bytes.Length > 0 && bytes[0] == NotValidFirstByteOfUtf8EncodedJson)
+            {
+                return string.Format("Compressed bytes ({0})", bytes.Length);
+            }
+
             try
             {
                 return DefaultEncoding.GetString(bytes);
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 return string.Format("Could not generate string out of byte[{0}]: {1}", bytes.Length, exception);
             }

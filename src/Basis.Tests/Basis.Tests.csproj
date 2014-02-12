@@ -94,9 +94,11 @@
     <Compile Include="Integration\ItWorks.cs" />
     <Compile Include="FixtureBase.cs" />
     <Compile Include="Integration\ServerCanResume.cs" />
+    <Compile Include="Integration\TestMessageSizeLimits.cs" />
     <Compile Include="MongoFixture.cs" />
     <Compile Include="MongoTjek.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestJsonSerializer.cs" />
     <Compile Include="UrlHelper.cs" />
   </ItemGroup>
   <ItemGroup>

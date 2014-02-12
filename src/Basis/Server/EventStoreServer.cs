@@ -80,7 +80,7 @@ namespace Basis.Server
                 {
                     EnableDetailedErrors = Config.CurrentBuildConfig == Config.BuildConfig.Debug,
                     EnableJSONP = true,
-                    Resolver = resolver
+                    Resolver = resolver,
                 };
 
                 a.RunSignalR(hubConfiguration);
