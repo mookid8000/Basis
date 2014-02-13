@@ -19,3 +19,5 @@
 * 0.0.8: Fixed recovery issue
 
 * 0.0.9: Crude auto-metadata based on short .NET type name.
+
+* 0.0.10: Limit to at most 1000 buffered events in the stream client.

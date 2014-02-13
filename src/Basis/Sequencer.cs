@@ -8,7 +8,11 @@ namespace Basis
     public class Sequencer : IDisposable
     {
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
-        readonly ConcurrentSortedSet _events = new ConcurrentSortedSet(new DeserializedEventComparer());
+        
+        readonly ConcurrentSortedSet _events = new ConcurrentSortedSet(new DeserializedEventComparer())
+        {
+            MaxSize = 1000
+        };
         readonly IStreamHandler _streamHandler;
         readonly Thread _dispatcher;
 

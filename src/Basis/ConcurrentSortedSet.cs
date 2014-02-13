@@ -9,26 +9,48 @@ namespace Basis
         public ConcurrentSortedSet(IComparer<DeserializedEvent> comparer)
         {
             _sortedSet = new SortedSet<DeserializedEvent>(comparer);
+            MaxSize = int.MaxValue;
         }
 
         public int Count
         {
-            get { lock (_sortedSet) return _sortedSet.Count; }
+            get
+            {
+                lock (_sortedSet)
+                {
+                    return _sortedSet.Count;
+                }
+            }
         }
 
+        public int MaxSize { get; set; }
         public void Add(DeserializedEvent item)
         {
-            lock (_sortedSet) _sortedSet.Add(item);
+            lock (_sortedSet)
+            {
+                _sortedSet.Add(item);
+
+                while (_sortedSet.Count > MaxSize)
+                {
+                    _sortedSet.Remove(_sortedSet.Max);
+                }
+            }
         }
 
         public DeserializedEvent FirstOrDefault()
         {
-            lock (_sortedSet) return _sortedSet.FirstOrDefault();
+            lock (_sortedSet)
+            {
+                return _sortedSet.FirstOrDefault();
+            }
         }
 
         public void Remove(DeserializedEvent item)
         {
-            lock (_sortedSet) _sortedSet.Remove(item);
+            lock (_sortedSet)
+            {
+                _sortedSet.Remove(item);
+            }
         }
 
         public long[] GetGaps(long lastSequenceNumber)
