@@ -87,6 +87,7 @@ namespace Basis.Server
                     .SelectMany(b => b.Events)
                     .Where(e => eventNumbers.Contains(e.SeqNo))
                     .Select(e => new PlaybackEvent(e.SeqNo, e.Body))
+                    .OrderBy(e => e.SeqNo)
                     .ToList();
 
                 var playbackEventBatch = new PlaybackEventBatch(specificEvents);
