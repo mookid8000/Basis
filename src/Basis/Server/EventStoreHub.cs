@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Basis.Messages;
 using Basis.Persistence;
@@ -11,6 +12,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Builders;
 using NLog;
+using Timer = System.Timers.Timer;
 
 namespace Basis.Server
 {
@@ -112,51 +114,63 @@ namespace Basis.Server
             var currentSeqNo = args.CurrentSeqNo;
 
             var stopwatch = Stopwatch.StartNew();
-            Log.Info("Playback requested by {0} from seq no {1}", Context.ConnectionId, currentSeqNo);
-            var eventsPlayedBack = 0;
+            var connectionId = Context.ConnectionId;
+
+            Log.Info("Playback requested by {0} from seq no {1}", connectionId, currentSeqNo);
+            var eventsPlayedBack = 0L;
 
             try
             {
-                do
+                using (var logTimer = new Timer(10000))
                 {
-                    var minSeqNo = currentSeqNo;
-                    
-                    var eventBatches = _eventsCollection
-                        .Find(Query.GT("Events.SeqNo", minSeqNo))
-                        .SetSortOrder(SortBy.Ascending("FirstSeqNo"))
-                        .SetLimit(100)
-                        .ToList();
-
-                    if (!eventBatches.Any()) break;
-
-                    var playbackEvents = eventBatches
-                        .SelectMany(e => e.Events)
-                        .Where(e => e.SeqNo > minSeqNo)
-                        .OrderBy(e => e.SeqNo)
-                        .Select(e => new PlaybackEvent(e.SeqNo, e.Body))
-                        .Partition(20)
-                        .ToList();
-
-                    eventsPlayedBack += playbackEvents.Count;
-
-                    foreach (var batch in playbackEvents)
+                    logTimer.Elapsed += (o, ea) =>
                     {
-                        var playbackEventBatch = new PlaybackEventBatch(batch);
+                        var currentValueOfEventsPlayedBack = Interlocked.Read(ref eventsPlayedBack);
+                        Log.Debug("{0} events played back to {1}", currentValueOfEventsPlayedBack, connectionId);
+                    };
+                    logTimer.Start();
 
-                        await Clients.Caller.Accept(playbackEventBatch);
+                    do
+                    {
+                        var minSeqNo = currentSeqNo;
 
-                        currentSeqNo = batch.Max(b => b.SeqNo);
-                    }
-                } while (true);
+                        var eventBatches = _eventsCollection
+                            .Find(Query.GT("Events.SeqNo", minSeqNo))
+                            .SetSortOrder(SortBy.Ascending("FirstSeqNo"))
+                            .SetLimit(100)
+                            .ToList();
+
+                        if (!eventBatches.Any()) break;
+
+                        var playbackEvents = eventBatches
+                            .SelectMany(e => e.Events)
+                            .Where(e => e.SeqNo > minSeqNo)
+                            .OrderBy(e => e.SeqNo)
+                            .Select(e => new PlaybackEvent(e.SeqNo, e.Body))
+                            .Partition(20)
+                            .ToList();
+
+                        foreach (var batch in playbackEvents)
+                        {
+                            var playbackEventBatch = new PlaybackEventBatch(batch);
+
+                            await Clients.Caller.Accept(playbackEventBatch);
+
+                            currentSeqNo = batch.Max(b => b.SeqNo);
+                        }
+
+                        Interlocked.Add(ref eventsPlayedBack, playbackEvents.Count);
+                    } while (true);
+                }
 
                 var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
 
                 Log.Info("{0} events played back in {1:0.0} s - that's {2:0.0} events/s",
                     eventsPlayedBack, elapsedSeconds, eventsPlayedBack/elapsedSeconds);
 
-                Log.Info("Subscribing {0} to RT events now", Context.ConnectionId);
-                
-                await Groups.Add(Context.ConnectionId, StreamClientsGroupName);
+                Log.Info("Subscribing {0} to RT events now", connectionId);
+
+                await Subscribe();
             }
             catch (Exception exception)
             {
