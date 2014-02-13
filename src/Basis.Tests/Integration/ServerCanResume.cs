@@ -62,6 +62,9 @@ namespace Basis.Tests.Integration
 
             Console.WriteLine("Got numbers: {0}", string.Join(", ", processedSequenceNumbers));
 
+            Assert.That(processedSequenceNumbers.Count, Is.EqualTo(2), 
+                "Expected exactly two sequence numbers, but we got: {0}", string.Join(", ", processedSequenceNumbers));
+
             Assert.That(processedSequenceNumbers[0], Is.EqualTo(1));
             Assert.That(processedSequenceNumbers[1], Is.EqualTo(2));
         }
