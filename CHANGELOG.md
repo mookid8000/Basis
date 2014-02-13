@@ -15,3 +15,5 @@
 * 0.0.6: Auto-compression/decompression when payload exceeds 2 KB (which is an arbitrary threshold).
 
 * 0.0.7: Wait with subscribing to RT events until after initial playback has finished.
+
+* 0.0.8: Fixed recovery issue

@@ -43,7 +43,7 @@ namespace Basis
                 var seqNosToReturn = new List<long>();
                 var seqNosOfEvents = _sortedSet.Select(s => s.SeqNo).ToArray();
 
-                for (var seqNo = lastSequenceNumber; seqNo < seqNosOfEvents.Max(); seqNo++)
+                for (var seqNo = lastSequenceNumber + 1; seqNo < seqNosOfEvents.Max(); seqNo++)
                 {
                     if (seqNosOfEvents.Contains(seqNo)) continue;
 
