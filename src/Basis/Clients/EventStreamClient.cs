@@ -17,8 +17,8 @@ namespace Basis.Clients
         readonly string _eventStoreListenUri;
         readonly Sequencer _sequencer;
         readonly Timer _periodicRecoveryTimer;
+        readonly Timer _periodicSyncRequestTimer;
 
-        long _lastSeqNo = -1;
         HubConnection _hubConnection;
         IHubProxy _eventStoreProxy;
         bool _started;
@@ -32,6 +32,10 @@ namespace Basis.Clients
             _periodicRecoveryTimer = new Timer(5000);
             _periodicRecoveryTimer.Elapsed += (o, ea) => RequestMissingEvents();
             _periodicRecoveryTimer.Start();
+
+            _periodicSyncRequestTimer = new Timer(20000);
+            _periodicSyncRequestTimer.Elapsed += (o, ea) => RequestPlayback();
+            _periodicSyncRequestTimer.Start();
         }
 
         public void Start()
@@ -40,8 +44,6 @@ namespace Basis.Clients
             {
                 throw new InvalidOperationException("Event stream client has already been started! Cannot start event stream client twice!");
             }
-
-            _lastSeqNo = _streamHandler.GetLastSequenceNumber();
 
             Log.Info("Starting event stream client for {0}", _eventStoreListenUri);
 
@@ -54,10 +56,17 @@ namespace Basis.Clients
             Log.Debug("Opening connection");
             _hubConnection.Start().Wait();
 
-            Log.Info("Last seq no: {0}", _lastSeqNo);
-            EnsureWeCatchUp();
+            RequestPlayback();
 
             _started = true;
+        }
+
+        void RequestPlayback()
+        {
+            var lastSequenceNumber = _streamHandler.GetLastSequenceNumber();
+            Log.Info("Last seq no: {0}", lastSequenceNumber);
+
+            _eventStoreProxy.Invoke("RequestPlayback", new RequestPlaybackArgs(lastSequenceNumber));
         }
 
         void RequestMissingEvents()
@@ -66,7 +75,6 @@ namespace Basis.Clients
 
             if (!missingSequenceNumbers.Any())
             {
-                Log.Info("Checked for missing sequence numbers - none were found :)");
                 _sequencer.RunDispatcherForSafetysSake();
                 return;
             }
@@ -76,11 +84,6 @@ namespace Basis.Clients
             var first1000 = missingSequenceNumbers.OrderBy(s => s).Take(1000).ToArray();
 
             _eventStoreProxy.Invoke("RequestSpecificEvents", new RequestSpecificEventsArgs(first1000));
-        }
-
-        void EnsureWeCatchUp()
-        {
-            _eventStoreProxy.Invoke("RequestPlayback", new RequestPlaybackArgs(_streamHandler.GetLastSequenceNumber()));
         }
 
         async Task DispatchToStreamHandler(PlaybackEventBatch batch)
