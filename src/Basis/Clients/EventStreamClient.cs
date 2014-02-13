@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -12,19 +13,20 @@ namespace Basis.Clients
     public class EventStreamClient : IDisposable
     {
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        readonly List<IDisposable> _subscriptions = new List<IDisposable>();
         readonly JsonSerializer _serializer = new JsonSerializer();
         readonly IStreamHandler _streamHandler;
         readonly string _eventStoreListenUri;
         readonly Sequencer _sequencer;
         readonly Timer _periodicRecoveryTimer;
         readonly Timer _periodicSyncRequestTimer;
-
-        HubConnection _hubConnection;
+        readonly HubConnection _hubConnection;
         IHubProxy _eventStoreProxy;
         bool _started;
 
         public EventStreamClient(IStreamHandler streamHandler, string eventStoreListenUri)
         {
+            _hubConnection = new HubConnection(eventStoreListenUri);
             _streamHandler = streamHandler;
             _eventStoreListenUri = eventStoreListenUri;
             _sequencer = new Sequencer(streamHandler);
@@ -47,11 +49,10 @@ namespace Basis.Clients
 
             Log.Info("Starting event stream client for {0}", _eventStoreListenUri);
 
-            _hubConnection = new HubConnection(_eventStoreListenUri);
             _eventStoreProxy = _hubConnection.CreateHubProxy(typeof(EventStoreHub).Name);
 
-            _eventStoreProxy.On<PlaybackEventBatch>("Publish", dto => DispatchToStreamHandler(dto));
-            _eventStoreProxy.On<PlaybackEventBatch>("Accept", dto => DispatchToStreamHandler(dto));
+            Handle<PlaybackEventBatch>("Publish", dto => DispatchToStreamHandler(dto));
+            Handle<PlaybackEventBatch>("Accept", dto => DispatchToStreamHandler(dto));
 
             Log.Debug("Opening connection");
             _hubConnection.Start().Wait();
@@ -59,6 +60,11 @@ namespace Basis.Clients
             RequestPlayback();
 
             _started = true;
+        }
+
+        void Handle<TDto>(string eventName, Action<TDto> onData)
+        {
+            _subscriptions.Add(_eventStoreProxy.On(eventName, onData));
         }
 
         void RequestPlayback()
@@ -108,15 +114,16 @@ namespace Basis.Clients
         public void Dispose()
         {
             _periodicRecoveryTimer.Stop();
+            _periodicSyncRequestTimer.Stop();
 
-            if (_hubConnection != null)
-            {
-                Log.Info("Shutting down event stream client for {0}", _eventStoreListenUri);
-                _hubConnection.Dispose();
+            Log.Info("Stopping subscriptions");
+            _subscriptions.ForEach(s => s.Dispose());
+            _subscriptions.Clear();
 
-                _hubConnection = null;
-                Log.Info("Event stream client stopped");
-            }
+            Log.Info("Shutting down event stream client for {0}", _eventStoreListenUri);
+            _hubConnection.Dispose();
+
+            Log.Info("Event stream client stopped");
 
             _periodicRecoveryTimer.Dispose();
 

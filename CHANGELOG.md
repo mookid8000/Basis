@@ -25,3 +25,5 @@
 * 0.0.11: Period progress log during lengthy playbacks.
 
 * 0.0.12: Added stats to the server.
+
+* 0.0.13: Properly dispose subscriptions before shutting down the hub in the stream client.
