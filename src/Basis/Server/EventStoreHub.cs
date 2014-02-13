@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -19,6 +20,7 @@ namespace Basis.Server
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
         readonly SequenceNumberGenerator _sequenceNumberGenerator;
         readonly MongoCollection<PersistenceEventBatch> _eventsCollection;
+        readonly ConcurrentBag<string> _indexedPaths = new ConcurrentBag<string>();
 
         public EventStoreHub(MongoDatabase database, SequenceNumberGenerator sequenceNumberGenerator, string collectionName)
         {
@@ -29,11 +31,11 @@ namespace Basis.Server
         public async Task Save(EventBatchToSave eventBatchToSave)
         {
             var events = eventBatchToSave.Events
-                .Select(bytes => new PersistenceEvent
+                .Select(evnt => new PersistenceEvent
                 {
-                    Body = bytes,
+                    Body = evnt.Body,
                     SeqNo = _sequenceNumberGenerator.GetNextSequenceNumber(),
-                    Meta = new Dictionary<string, string>()
+                    Meta = evnt.Meta ?? new Dictionary<string, string>()
                 })
                 .ToList();
 
@@ -45,6 +47,16 @@ namespace Basis.Server
             var playbackEventBatch = new PlaybackEventBatch(playbackEvents);
 
             await Clients.Group(StreamClientsGroupName).Publish(playbackEventBatch);
+
+            var allKeysInThisBatch = events.SelectMany(e => e.Meta.Keys).Distinct();
+
+            foreach (var key in allKeysInThisBatch)
+            {
+                if (_indexedPaths.Contains(key)) continue;
+
+                _eventsCollection.EnsureIndex(IndexKeys.Ascending(string.Format("Events.Meta.{0}", key)));
+                _indexedPaths.Add(key);
+            }
         }
 
         public async Task RequestSpecificEvents(RequestSpecificEventsArgs args)

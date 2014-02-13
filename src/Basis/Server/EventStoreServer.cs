@@ -47,7 +47,8 @@ namespace Basis.Server
                 {
                     _database.CreateCollection(_collectionName);
                     var collection = _database.GetCollection(_collectionName);
-                    collection.EnsureIndex(IndexKeys<PersistenceEventBatch>.Ascending(b => b.FirstSeqNo), IndexOptions.SetUnique(true));
+                    collection.EnsureIndex(IndexKeys.Ascending("FirstSeqNo"), IndexOptions.SetUnique(true));
+                    collection.EnsureIndex(IndexKeys.Ascending("Events.SeqNo"), IndexOptions.SetUnique(true));
                 }
                 catch { }
             }

@@ -52,14 +52,25 @@ namespace Basis.Clients
                 await _eventStoreProxy.Invoke("Save", new EventBatchToSave
                 {
                     Events = list
-                        .Select(e => _serializer.Serialize(e))
-                        .ToArray()
+                        .Select(e => new EventToSave
+                        {
+                            Body = _serializer.Serialize(e),
+                            Meta = ExtractMeta(e)
+                        })
+                        .ToList()
                 });
             }
             catch (Exception ex)
             {
                 throw new ApplicationException(string.Format("Exception occured while trying to store the following events: {0}", string.Join(", ", list)), ex);
             }
+        }
+
+        Dictionary<string, string> ExtractMeta(object evnt)
+        {
+            var eventType = evnt.GetType();
+
+            return new Dictionary<string, string> {{Meta.Type, eventType.Name}};
         }
 
         public void Dispose()
@@ -75,5 +86,10 @@ namespace Basis.Clients
 
             _started = false;
         }
+    }
+
+    public class Meta
+    {
+        public const string Type = "b-type";
     }
 }

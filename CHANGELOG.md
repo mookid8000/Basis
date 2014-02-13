@@ -17,3 +17,5 @@
 * 0.0.7: Wait with subscribing to RT events until after initial playback has finished.
 
 * 0.0.8: Fixed recovery issue
+
+* 0.0.9: Crude auto-metadata based on short .NET type name.
