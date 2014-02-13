@@ -93,6 +93,7 @@
     <Compile Include="Integration\CanCatchUp.cs" />
     <Compile Include="Integration\ItWorks.cs" />
     <Compile Include="FixtureBase.cs" />
+    <Compile Include="Integration\MustNotInterleaveSequenceNumbers.cs" />
     <Compile Include="Integration\ServerCanResume.cs" />
     <Compile Include="Integration\TestMessageSizeLimits.cs" />
     <Compile Include="MongoFixture.cs" />

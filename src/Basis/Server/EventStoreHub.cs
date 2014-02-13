@@ -30,14 +30,18 @@ namespace Basis.Server
 
         public async Task Save(EventBatchToSave eventBatchToSave)
         {
-            var events = eventBatchToSave.Events
-                .Select(evnt => new PersistenceEvent
-                {
-                    Body = evnt.Body,
-                    SeqNo = _sequenceNumberGenerator.GetNextSequenceNumber(),
-                    Meta = evnt.Meta ?? new Dictionary<string, string>()
-                })
-                .ToList();
+            var events = new List<PersistenceEvent>();
+
+            using (var generator = _sequenceNumberGenerator.GetGenerator())
+            {
+                events.AddRange(eventBatchToSave.Events
+                    .Select(evnt => new PersistenceEvent
+                    {
+                        Body = evnt.Body,
+                        SeqNo = generator.GetNextSequenceNumber(),
+                        Meta = evnt.Meta ?? new Dictionary<string, string>()
+                    }));
+            }
 
             Log.Debug("Inserting {0}-{1}... ", events.First().SeqNo, events.Last().SeqNo);
 

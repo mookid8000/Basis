@@ -14,10 +14,10 @@ namespace Basis.Server
     public class EventStoreServer : IDisposable
     {
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
+        readonly SequenceNumberGenerator _sequenceNumberGenerator = new SequenceNumberGenerator();
         readonly string _listenUri;
         readonly string _collectionName;
         readonly MongoDatabase _database;
-        readonly SequenceNumberGenerator _sequenceNumberGenerator;
 
         IDisposable _host;
 
@@ -28,7 +28,6 @@ namespace Basis.Server
             _database = database;
             _collectionName = collectionName;
             _listenUri = listenUri;
-            _sequenceNumberGenerator = new SequenceNumberGenerator(0);
         }
 
         public void Start()
