@@ -23,3 +23,5 @@
 * 0.0.10: Limit to at most 1000 buffered events in the stream client.
 
 * 0.0.11: Period progress log during lengthy playbacks.
+
+* 0.0.12: Added stats to the server.

@@ -104,6 +104,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SequenceNumberGenerator.cs" />
     <Compile Include="Sequencer.cs" />
+    <Compile Include="Server\Counter.cs" />
+    <Compile Include="Server\Stats.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Basis.nuspec" />

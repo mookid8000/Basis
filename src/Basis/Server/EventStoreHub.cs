@@ -21,12 +21,14 @@ namespace Basis.Server
         private const string StreamClientsGroupName = "stream_clients";
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
         readonly SequenceNumberGenerator _sequenceNumberGenerator;
+        readonly Stats _stats;
         readonly MongoCollection<PersistenceEventBatch> _eventsCollection;
         readonly ConcurrentBag<string> _indexedPaths = new ConcurrentBag<string>();
 
-        public EventStoreHub(MongoDatabase database, SequenceNumberGenerator sequenceNumberGenerator, string collectionName)
+        public EventStoreHub(MongoDatabase database, SequenceNumberGenerator sequenceNumberGenerator, string collectionName, Stats stats)
         {
             _sequenceNumberGenerator = sequenceNumberGenerator;
+            _stats = stats;
             _eventsCollection = database.GetCollection<PersistenceEventBatch>(collectionName);
         }
 
@@ -63,6 +65,8 @@ namespace Basis.Server
                 _eventsCollection.EnsureIndex(IndexKeys.Ascending(string.Format("Events.Meta.{0}", key)));
                 _indexedPaths.Add(key);
             }
+
+            _stats.EventBatchSaved();
         }
 
         public async Task RequestSpecificEvents(RequestSpecificEventsArgs args)
@@ -93,6 +97,8 @@ namespace Basis.Server
 
                 Log.Info("{0} events played back in {1:0.0} s - that's {2:0.0} events/s",
                     specificEvents.Count, elapsedSeconds, specificEvents.Count/elapsedSeconds);
+
+                _stats.SpecificEventsReturned(specificEvents.Count);
             }
             catch (Exception exception)
             {
@@ -160,6 +166,8 @@ namespace Basis.Server
                         }
 
                         Interlocked.Add(ref eventsPlayedBack, playbackEvents.Count);
+
+                        _stats.EventsPlayedBack(playbackEvents.Count);
                     } while (true);
                 }
 

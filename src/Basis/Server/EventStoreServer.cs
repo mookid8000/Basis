@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Timers;
 using Basis.Persistence;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin.Cors;
@@ -15,6 +16,8 @@ namespace Basis.Server
     {
         static readonly Logger Log = LogManager.GetCurrentClassLogger();
         readonly SequenceNumberGenerator _sequenceNumberGenerator = new SequenceNumberGenerator();
+        readonly Timer _statsTimer = new Timer(60000);
+        readonly Stats _stats = new Stats();
         readonly string _listenUri;
         readonly string _collectionName;
         readonly MongoDatabase _database;
@@ -28,6 +31,19 @@ namespace Basis.Server
             _database = database;
             _collectionName = collectionName;
             _listenUri = listenUri;
+
+            _statsTimer.Elapsed += (o, ea) => LogStats();
+        }
+
+        void LogStats()
+        {
+            var playedBackEvents = _stats.GetPlayedBackEvents();
+            var savedEventBatches = _stats.GetSavedEventBatches();
+            var specificallyRequestedEvents = _stats.GetSpecificallyRequestedEvents();
+            
+            Log.Info("Event batches saved: {0} (last {1})", savedEventBatches.Count, savedEventBatches.Elapsed);
+            Log.Info("Events played back: {0} (last {1})", playedBackEvents.Count, playedBackEvents.Elapsed);
+            Log.Info("Events specifically requested: {0} (last {1})", specificallyRequestedEvents.Count, specificallyRequestedEvents.Elapsed);
         }
 
         public void Start()
@@ -74,7 +90,7 @@ namespace Basis.Server
                 a.UseCors(CorsOptions.AllowAll);
 
                 var resolver = new DefaultDependencyResolver();
-                resolver.Register(typeof(EventStoreHub), () => new EventStoreHub(_database, _sequenceNumberGenerator, _collectionName));
+                resolver.Register(typeof(EventStoreHub), () => new EventStoreHub(_database, _sequenceNumberGenerator, _collectionName, _stats));
 
                 var hubConfiguration = new HubConfiguration
                 {
@@ -87,11 +103,15 @@ namespace Basis.Server
             });
 
             Log.Info("Event store server started");
+            _stats.Reset();
+            _statsTimer.Start();
             _started = true;
         }
 
         public void Dispose()
         {
+            _statsTimer.Dispose();
+
             if (_host != null)
             {
                 Log.Info("Shutting down event store server on {0}", _listenUri);
@@ -102,6 +122,8 @@ namespace Basis.Server
             }
 
             _started = false;
+
+            LogStats();
         }
     }
 }
