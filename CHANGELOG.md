@@ -13,3 +13,5 @@
 * 0.0.5: Better serialization/deserialization exceptions and proper "fill-in-the-gaps" functionality.
 
 * 0.0.6: Auto-compression/decompression when payload exceeds 2 KB (which is an arbitrary threshold).
+
+* 0.0.7: Wait with subscribing to RT events until after initial playback has finished.

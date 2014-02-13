@@ -82,10 +82,17 @@ namespace Basis.Server
             }
         }
 
-        public async Task RequestPlayback(RequestPlaybackArgs args)
+        public async Task Subscribe()
         {
             await Groups.Add(Context.ConnectionId, StreamClientsGroupName);
+        }
+        public async Task Unsubscribe()
+        {
+            await Groups.Remove(Context.ConnectionId, StreamClientsGroupName);
+        }
 
+        public async Task RequestPlayback(RequestPlaybackArgs args)
+        {
             var currentSeqNo = args.CurrentSeqNo;
 
             var stopwatch = Stopwatch.StartNew();
@@ -130,6 +137,10 @@ namespace Basis.Server
 
                 Log.Info("{0} events played back in {1:0.0} s - that's {2:0.0} events/s",
                     eventsPlayedBack, elapsedSeconds, eventsPlayedBack/elapsedSeconds);
+
+                Log.Info("Subscribing {0} to RT events now", Context.ConnectionId);
+                
+                await Groups.Add(Context.ConnectionId, StreamClientsGroupName);
             }
             catch (Exception exception)
             {
