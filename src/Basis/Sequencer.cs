@@ -36,7 +36,6 @@ namespace Basis
 
         public void RunDispatcherForSafetysSake()
         {
-            Log.Info("Running the dispatcher - just in case - we have {0} events", _events.Count);
             _dispatcherThreadWorkSignal.Release();
         }
 
@@ -78,6 +77,7 @@ namespace Basis
 
                 try
                 {
+                    Log.Debug("Processing {0}", deserializedEvent.SeqNo);
                     _streamHandler.ProcessEvent(deserializedEvent).Wait();
                 }
                 catch (Exception exception)

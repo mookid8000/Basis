@@ -41,7 +41,9 @@ namespace Basis
         {
             lock (_sortedSet)
             {
-                return _sortedSet.FirstOrDefault();
+                return _sortedSet.Count > 0
+                    ? _sortedSet.Min
+                    : null;
             }
         }
 
